@@ -1,0 +1,363 @@
+@startuml JobPortal_Layered_Architecture
+
+title Job Portal - Layered Class Diagram\n(controllers -> services -> repositories / entities, NestJS)
+
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowOff
+skinparam roundCorner 4
+skinparam nodesep 55
+skinparam ranksep 75
+skinparam wrapWidth 240
+skinparam defaultFontSize 11
+skinparam classFontSize 12
+skinparam classFontStyle bold
+hide circle
+
+' =====================================================================
+'  1. CONTROLLER LAYER  (HTTP adapters)
+' =====================================================================
+package "Controllers (HTTP)" #EAF3FF {
+
+  class AuthController <<controller>> {
+    +register(dto: RegisterDto): ApiResult<AuthResponse>
+    +login(dto: LoginDto): ApiResult<AuthResponse>
+  }
+
+  class PublicController <<controller>> {
+    +findJobs(query: PublicJobsQueryDto): ApiResult<unknown>
+    +findLandingJobs(query: PublicJobsQueryDto): ApiResult<unknown>
+    +findJobById(jobId: number): ApiResult<unknown>
+    +findSkills(query: SkillSearchQueryDto): ApiResult<unknown>
+  }
+
+  class SeekerController <<controller>> {
+    +findStats(user: AuthenticatedUser)
+    +apply(user: AuthenticatedUser, jobId: number)
+    +listApplications(user: AuthenticatedUser)
+    +revoke(user: AuthenticatedUser, applicationId: number)
+    +match(user: AuthenticatedUser, jobId: number)
+    +saveJob(user: AuthenticatedUser, jobId: number)
+    +listSavedJobs(user: AuthenticatedUser)
+    +removeSavedJob(user: AuthenticatedUser, jobId: number)
+    +getProfile(user: AuthenticatedUser)
+    +updateProfile(user: AuthenticatedUser, dto)
+    +updateSkills(user: AuthenticatedUser, dto)
+    +uploadPhoto(user: AuthenticatedUser, file)
+    +uploadResume(user: AuthenticatedUser, file)
+    +downloadOwnResume(user: AuthenticatedUser, applicationId: number)
+    +employerOfJob(user: AuthenticatedUser, jobId: number)
+  }
+
+  class EmployerController <<controller>> {
+    +statsFor(user: AuthenticatedUser)
+    +createJob(user: AuthenticatedUser, dto: CreateJobDto)
+    +listMyJobs(user: AuthenticatedUser)
+    +updateJob(user: AuthenticatedUser, jobId: number, dto)
+    +updateJobStatus(user: AuthenticatedUser, jobId: number, status)
+    +deleteJob(user: AuthenticatedUser, jobId: number)
+    +listApplicants(user: AuthenticatedUser, jobId: number, query)
+    +updateApplicationStatus(user: AuthenticatedUser, applicationId, dto)
+    +getProfile(user: AuthenticatedUser)
+    +updateProfile(user: AuthenticatedUser, dto)
+    +uploadLogo(user: AuthenticatedUser, file)
+  }
+
+  class AdminController <<controller>> {
+    +stats(): ApiResult<unknown>
+    +employers(): ApiResult<unknown>
+    +seekers(): ApiResult<unknown>
+    +users(): ApiResult<unknown>
+    +user(userId: number): ApiResult<unknown>
+    +updateStatus(adminId, userId, isActive)
+    +deleteUser(adminId, userId)
+    +verify(adminId, jobId: number)
+    +unverify(adminId, jobId: number)
+    +deleteJob(adminId, jobId: number)
+    +jobs(query: AdminJobsQueryDto)
+    +logs(): ApiResult<unknown>
+  }
+
+  class ResumeDownloadController <<controller>> {
+    +download(applicationId: number, user, response)
+  }
+
+  class JwtAuthGuard <<guard>> {
+    -sessions : SessionService
+    +canActivate(context: ExecutionContext): Promise<boolean>
+  }
+}
+
+' =====================================================================
+'  2. SERVICE LAYER  (business logic)
+' =====================================================================
+package "Services (business logic)" #F2F9EA {
+
+  class AuthService <<service>> {
+    -logger : Logger
+    +register(dto: RegisterDto): ApiResult<AuthResponse>
+    +login(dto: LoginDto): ApiResult<AuthResponse>
+    +signToken(user: User): Promise<string>
+    -toResponse(user: User): Promise<AuthResponse>
+    -assertRoleRequirements(dto: RegisterDto): void
+    -isDuplicateKeyError(error: unknown): boolean
+  }
+
+  class SessionService <<service>> {
+    +resolve(token: string): Promise<AuthenticatedUser>
+  }
+
+  class PublicService <<service>> {
+    +findJobs(query, defaultLimit?): Promise<{data, count}>
+    +findJobById(jobId: number): Promise<PublicJobDto>
+    +findSkills(search?: string): Promise<Skill[]>
+    -baseQuery(): SelectQueryBuilder<Job>
+    -applyFilters(qb, query): void
+  }
+
+  class SeekerProfileService <<service>> {
+    +getProfile(seekerId: number): SeekerProfileDto
+    +updateProfile(seekerId, dto): Promise<void>
+    +updateResume(seekerId, file): Promise<{path, filename}>
+    +getResume(seekerId): Promise<{absolutePath, filename}>
+    +updatePhoto(seekerId, file): Promise<string>
+    +updateSkills(seekerId, dto: UpdateSkillsDto): Promise<void>
+  }
+
+  class SeekerApplicationService <<service>> {
+    +apply(seekerId, jobId): Promise<{application_id, seeker_id}>
+    +list(seekerId: number): Promise<{data, count}>
+    +revoke(seekerId, applicationId): Promise<void>
+    +jobMatch(seekerId, jobId): Promise<JobMatchDto>
+  }
+
+  class SeekerSavedJobService <<service>> {
+    +save(seekerId, jobId): Promise<void>
+    +remove(seekerId, jobId): Promise<void>
+    +list(seekerId: number): Promise<{data, count}>
+  }
+
+  class SeekerStatsService <<service>> {
+    +stats(seekerId: number): SeekerStatsDto
+  }
+
+  class EmployerJobService <<service>> {
+    +create(employerId, dto: CreateJobDto): Promise<number>
+    +listMine(employerId): Promise<{data, count}>
+    +update(employerId, jobId, dto): Promise<void>
+    +updateStatus(employerId, jobId, status): Promise<void>
+    +remove(employerId, jobId): Promise<void>
+  }
+
+  class EmployerApplicantService <<service>> {
+    +listApplicants(employerId, jobId, query): Promise<{data, count}>
+    +updateApplicationStatus(employerId, applicationId, dto): Promise<void>
+    -buildQuery(jobId, query): SelectQueryBuilder<Application>
+    -loadSkills(seekerIds: number[]): Promise<Map<number, SkillRef[]>>
+  }
+
+  class EmployerProfileService <<service>> {
+    +getProfile(employerId: number): EmployerProfileDto
+    +updateProfile(employerId, dto): Promise<void>
+    +updateLogo(employerId, file): Promise<string>
+  }
+
+  class EmployerStatsService <<service>> {
+    +stats(employerId: number): EmployerStatsDto
+  }
+
+  class AdminService <<service>> {
+    +stats(): Promise<PlatformStats>
+    +listJobs(query: AdminJobsQueryDto)
+    +listUsers()
+    +getUser(userId: number)
+    +updateUserStatus(adminId, userId, isActive): Promise<void>
+    +deleteUser(adminId, userId): Promise<void>
+    +listEmployers()
+    +listSeekers()
+    +verifyJob(adminId, jobId): Promise<void>
+    +unverifyJob(adminId, jobId): Promise<void>
+    +deleteJob(adminId, jobId): Promise<void>
+    +listLogs()
+    -log(adminId, actionType, targetTable, targetId): Promise<void>
+  }
+
+  class ResumeStorageService <<service>> {
+    +save(buffer, originalName?): StoredFile
+    +resolve(storedPath: string): string
+    +downloadName(storedPath, fallback): string
+    +stream(absolutePath, filename, response): Promise<void>
+  }
+}
+
+' =====================================================================
+'  3. STORAGE  (Strategy pattern - the one real inheritance tree)
+' =====================================================================
+package "Storage (Strategy)" #FFF3E6 {
+
+  abstract class ImageStorage <<interface abstraction>> {
+    {abstract} +upload(buffer: Buffer, folder: string, originalName: string): Promise<string>
+  }
+
+  class LocalImageStorage <<strategy, local disk>> {
+    -rootDir : string
+    +upload(buffer, folder, originalName): Promise<string>
+  }
+
+  class CloudinaryImageStorage <<strategy, cloud CDN>> {
+    -cloudinary : Cloudinary
+    +upload(buffer, folder, originalName): Promise<string>
+  }
+
+  ImageStorage <|-- LocalImageStorage
+  ImageStorage <|-- CloudinaryImageStorage
+}
+
+' =====================================================================
+'  4. CROSS-CUTTING CONCERNS
+' =====================================================================
+package "Common (cross-cutting)" #F5EEF8 {
+
+  class ApiResult<T> <<response envelope>> {
+    -data : T | undefined
+    -options : EnvelopeOptions
+    -ApiResult(data, options)
+    +{static} withData<T>(data, options): ApiResult<T>
+    +{static} withMessage(message): ApiResult<never>
+    +{static} withCount<T>(data, count, options): ApiResult<T>
+  }
+
+  interface Envelope<T> <<DTO contract>> {
+    +success : true {readonly}
+    +message? : string {readonly}
+    +data? : T {readonly}
+    +count? : number {readonly}
+  }
+
+  interface AuthenticatedUser <<value object>> {
+    +userId : number {readonly}
+    +role : UserRole {readonly}
+    +email : string {readonly}
+  }
+
+  abstract class HttpException <<domain error base>>
+
+  class BadRequestError <<domain error>>
+  class UnauthorizedError <<domain error>>
+  class ForbiddenError <<domain error>>
+  class NotFoundError <<domain error>>
+  class ConflictError <<domain error>>
+  class UnprocessableError <<domain error>>
+
+  HttpException <|-- BadRequestError
+  HttpException <|-- UnauthorizedError
+  HttpException <|-- ForbiddenError
+  HttpException <|-- NotFoundError
+  HttpException <|-- ConflictError
+  HttpException <|-- UnprocessableError
+}
+
+' =====================================================================
+'  5. PERSISTENCE GATEWAY
+' =====================================================================
+interface "Repository<T> (TypeORM)" as Repo <<gateway>> {
+  +findOne(options)
+  +save(entity)
+  +update(criteria, partial)
+  +delete(criteria)
+  +createQueryBuilder(alias)
+}
+
+' =====================================================================
+'  6. LAYER DEPENDENCIES
+' =====================================================================
+
+' --- guard / auth -------------------------------------------------------
+JwtAuthGuard ..> SessionService : «uses»
+JwtAuthGuard ..> AuthenticatedUser : «produces»
+AuthController ..> AuthService : «delegates»
+AuthService ..> ApiResult : «wraps»
+
+' --- public -------------------------------------------------------------
+PublicController ..> PublicService : «delegates»
+
+' --- seeker -------------------------------------------------------------
+SeekerController ..> SeekerProfileService : «delegates»
+SeekerController ..> SeekerApplicationService : «delegates»
+SeekerController ..> SeekerSavedJobService : «delegates»
+SeekerController ..> SeekerStatsService : «delegates»
+
+' --- employer -----------------------------------------------------------
+EmployerController ..> EmployerJobService : «delegates»
+EmployerController ..> EmployerApplicantService : «delegates»
+EmployerController ..> EmployerProfileService : «delegates»
+EmployerController ..> EmployerStatsService : «delegates»
+
+' --- admin --------------------------------------------------------------
+AdminController ..> AdminService : «delegates»
+
+' --- storage ------------------------------------------------------------
+ResumeDownloadController ..> ResumeStorageService : «delegates»
+SeekerProfileService ..> ImageStorage : «injects abstraction»
+EmployerProfileService ..> ImageStorage : «injects abstraction»
+
+' --- persistence --------------------------------------------------------
+AuthService ..> Repo : «User»
+SessionService ..> Repo : «User»
+AdminService ..> Repo : «User, Job, AdminLog»
+PublicService ..> Repo : «Job, Skill»
+SeekerApplicationService ..> Repo : «Application»
+EmployerApplicantService ..> Repo : «Application, Job, SeekerSkill»
+
+' --- errors -------------------------------------------------------------
+AuthService ..> BadRequestError : «throws»
+AuthService ..> ConflictError : «throws»
+AuthService ..> UnauthorizedError : «throws»
+SessionService ..> UnauthorizedError : «throws»
+AdminService ..> ForbiddenError : «throws»
+AdminService ..> NotFoundError : «throws»
+EmployerApplicantService ..> ForbiddenError : «throws»
+PublicService ..> NotFoundError : «throws»
+
+' =====================================================================
+'  7. NOTES & LEGEND
+' =====================================================================
+note bottom of ImageStorage
+  **Pattern: Strategy / dependency inversion.**
+  The abstraction ImageStorage is injected into
+  SeekerProfileService (avatars) and EmployerProfileService
+  (company logos); storage.module.ts selects the concrete
+  implementation (local disk or Cloudinary) from configuration.
+end note
+
+note bottom of ApiResult<T>
+  **Pattern: generic response envelope.**
+  Controllers return ApiResult<T>; ResponseEnvelopeInterceptor
+  serialises it into the Envelope<T> JSON contract consumed
+  by the Angular frontend.
+end note
+
+note bottom of Repo
+  Persistence gateway. Every service receives concrete
+  TypeORM Repository<T> instances via constructor injection;
+  no service reaches into the database driver directly.
+end note
+
+legend bottom
+  |= Notation |= Meaning |
+  | + | public |
+  | - | private |
+  | # | protected |
+  | ~ | package-private |
+  | {abstract} | abstract member |
+  | {static} | static member |
+  | «stereotype» | class tag: controller, service, guard, strategy, DTO |
+  | *-- | composition |
+  | -->> | directed association |
+  | ..> | dependency (uses) |
+  | --|> | inheritance (extends) |
+  | ..|> | realization (implements) |
+  | <T> | generic type parameter |
+end legend
+
+@enduml

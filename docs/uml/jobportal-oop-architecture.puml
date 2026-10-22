@@ -1,0 +1,549 @@
+@startuml JobPortal_OOP_Architecture
+
+title Job Portal - OOP Class Diagram (NestJS backend)\nModules \u00b7 Controllers \u00b7 Services \u00b7 Guards \u00b7 Interceptors \u00b7 Filters \u00b7 Entities\nSolid = class, italic = interface/abstract, <|-- = implements/extends
+
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowOff
+skinparam roundCorner 4
+skinparam nodesep 45
+skinparam ranksep 60
+skinparam wrapWidth 230
+skinparam defaultFontSize 10
+skinparam classFontSize 11
+skinparam classFontStyle bold
+hide circle
+
+' =====================================================================
+'  1. NESTJS FRAMEWORK CONTRACTS (implemented, not owned)
+' =====================================================================
+package "NestJS contracts (framework)" #EEEEEE {
+  interface "CanActivate" as CanActivate {
+    +canActivate(context: ExecutionContext): boolean | Promise<boolean>
+  }
+  interface "NestInterceptor" as NestInterceptor {
+    +intercept(ctx: ExecutionContext, next: CallHandler): Observable<any>
+  }
+  interface "ExceptionFilter" as ExceptionFilter {
+    +catch(exception: unknown, host: ArgumentsHost): void
+  }
+  abstract class "HttpException" as NestHttpException {
+    +getStatus(): number
+    +getResponse(): string | object
+  }
+}
+
+' =====================================================================
+'  2. CROSS-CUTTING: GUARDS / INTERCEPTOR / FILTER / ERRORS
+' =====================================================================
+package "Cross-cutting concerns" #F5EEF8 {
+
+  class JwtAuthGuard <<@Injectable, global>> {
+    -reflector : Reflector
+    -sessions : SessionService
+    +canActivate(context): Promise<boolean>
+    -extractBearerToken(header?: string): string | null
+  }
+
+  class RolesGuard <<@Injectable, global>> {
+    -reflector : Reflector
+    +canActivate(context): boolean
+  }
+
+  class ResponseEnvelopeInterceptor <<@Injectable, global>> {
+    +intercept(ctx, next): Observable<Envelope>
+    -envelop(value: unknown): Envelope
+  }
+
+  class HttpExceptionFilter <<@Catch()>> {
+    -logger : Logger
+    +catch(exception, host): void
+    -toPayload(exception): {status, message}
+    -toText(...candidates: unknown[]): string
+  }
+
+  class BadRequestError
+  class UnauthorizedError
+  class ForbiddenError
+  class NotFoundError
+  class ConflictError
+  class UnprocessableError
+
+  NestHttpException <|-- BadRequestError
+  NestHttpException <|-- UnauthorizedError
+  NestHttpException <|-- ForbiddenError
+  NestHttpException <|-- NotFoundError
+  NestHttpException <|-- ConflictError
+  NestHttpException <|-- UnprocessableError
+
+  class ApiResult<T> <<response envelope>> {
+    -data : T | undefined
+    -options : EnvelopeOptions
+    -ApiResult(data, options)
+    +{static} withData<T>(data, options): ApiResult<T>
+    +{static} withMessage(message): ApiResult<never>
+    +{static} withCount<T>(data, count, options): ApiResult<T>
+  }
+
+  interface Envelope<T> <<DTO contract>> {
+    +success : true {readonly}
+    +message? : string {readonly}
+    +data? : T {readonly}
+    +count? : number {readonly}
+  }
+
+  interface AuthenticatedUser <<value object>> {
+    +userId : number {readonly}
+    +role : UserRole {readonly}
+    +email : string {readonly}
+  }
+}
+
+JwtAuthGuard ..|> CanActivate
+RolesGuard ..|> CanActivate
+ResponseEnvelopeInterceptor ..|> NestInterceptor
+HttpExceptionFilter ..|> ExceptionFilter
+ResponseEnvelopeInterceptor ..> ApiResult : «maps»
+ResponseEnvelopeInterceptor ..> Envelope : «produces»
+JwtAuthGuard ..> SessionService : «resolves identity»
+RolesGuard ..> AuthenticatedUser : «reads role»
+
+' =====================================================================
+'  3. AUTH MODULE
+' =====================================================================
+package "auth module" #EAF3FF {
+
+  class AuthController <<@Controller('auth')>> {
+    +register(dto: RegisterDto): Promise<ApiResult<AuthResponse>>
+    +login(dto: LoginDto): Promise<ApiResult<AuthResponse>>
+  }
+
+  class AuthService <<@Injectable>> {
+    -logger : Logger
+    -users : Repository<User>
+    -dataSource : DataSource
+    -jwtService : JwtService
+    -config : ConfigService
+    +register(dto: RegisterDto): ApiResult<AuthResponse>
+    +login(dto: LoginDto): ApiResult<AuthResponse>
+    +signToken(user: User): Promise<string>
+    -toResponse(user: User): Promise<AuthResponse>
+    -assertRoleRequirements(dto: RegisterDto): void
+    -isDuplicateKeyError(error: unknown): boolean
+  }
+
+  class SessionService <<@Injectable>> {
+    +resolve(token: string): Promise<AuthenticatedUser>
+  }
+
+  interface RegisterDto <<DTO, validation>> {
+    +email : string
+    +password : string
+    +role : UserRole
+    +secretKey? : string
+    +full_name? : string
+    +company_name? : string
+    +education? : string
+    +experience_years? : number
+  }
+
+  interface LoginDto <<DTO, validation>> {
+    +email : string
+    +password : string
+  }
+
+  function toAuthResponse <<mapper>> (user: User, token: string): AuthResponse
+}
+
+AuthController ..> AuthService : «delegates»
+AuthController ..> RegisterDto : «binds»
+AuthController ..> LoginDto : «binds»
+AuthService ..> User : «Repository CRUD»
+AuthService ..> JobSeeker : «insert on register»
+AuthService ..> Employer : «insert on register»
+AuthService ..> ApiResult : «wraps»
+AuthService ..> toAuthResponse : «maps»
+
+' =====================================================================
+'  4. SEEKER MODULE
+' =====================================================================
+package "seeker module" #EAF3FF {
+
+  class SeekerController <<@Controller('seeker'), @Roles(JOBSEEKER)>> {
+    +findStats(user): Promise<ApiResult<unknown>>
+    +apply(user, jobId): Promise<ApiResult<unknown>>
+    +listApplications(user): Promise<ApiResult<unknown>>
+    +revoke(user, applicationId): Promise<ApiResult<unknown>>
+    +match(user, jobId): Promise<ApiResult<unknown>>
+    +saveJob(user, jobId): Promise<ApiResult<unknown>>
+    +listSavedJobs(user): Promise<ApiResult<unknown>>
+    +removeSavedJob(user, jobId): Promise<ApiResult<unknown>>
+    +getProfile(user): Promise<ApiResult<unknown>>
+    +updateProfile(user, dto): Promise<ApiResult<unknown>>
+    +updateSkills(user, dto): Promise<ApiResult<unknown>>
+    +uploadPhoto(user, file): Promise<ApiResult<unknown>>
+    +uploadResume(user, file): Promise<ApiResult<unknown>>
+    +downloadOwnResume(user, applicationId): Promise<ApiResult<unknown>>
+    +employerOfJob(user, jobId): Promise<ApiResult<unknown>>
+  }
+
+  class SeekerProfileService <<@Injectable>> {
+    +getProfile(seekerId): SeekerProfileDto
+    +updateProfile(seekerId, dto): Promise<void>
+    +updateResume(seekerId, file): Promise<{path, filename}>
+    +getResume(seekerId): Promise<{absolutePath, filename}>
+    +updatePhoto(seekerId, file): Promise<string>
+    +updateSkills(seekerId, dto): Promise<void>
+  }
+
+  class SeekerApplicationService <<@Injectable>> {
+    +apply(seekerId, jobId): Promise<{application_id, seeker_id}>
+    +list(seekerId): Promise<{data, count}>
+    +revoke(seekerId, applicationId): Promise<void>
+    +jobMatch(seekerId, jobId): Promise<JobMatchDto>
+  }
+
+  class SeekerSavedJobService <<@Injectable>> {
+    +save(seekerId, jobId): Promise<void>
+    +remove(seekerId, jobId): Promise<void>
+    +list(seekerId): Promise<{data, count}>
+  }
+
+  class SeekerStatsService <<@Injectable>> {
+    +stats(seekerId): SeekerStatsDto
+  }
+}
+
+SeekerController ..> SeekerProfileService
+SeekerController ..> SeekerApplicationService
+SeekerController ..> SeekerSavedJobService
+SeekerController ..> SeekerStatsService
+SeekerProfileService ..> JobSeeker
+SeekerProfileService ..> SeekerSkill
+SeekerProfileService ..> ImageStorage : «avatar»
+SeekerApplicationService ..> Application
+SeekerApplicationService ..> Job
+SeekerApplicationService ..> SeekerSkill : «match score»
+SeekerSavedJobService ..> SavedJob
+SeekerStatsService ..> Application
+
+' =====================================================================
+'  5. EMPLOYER MODULE
+' =====================================================================
+package "employer module" #EAF3FF {
+
+  class EmployerController <<@Controller('employer'), @Roles(EMPLOYER)>> {
+    +statsFor(user): Promise<ApiResult<unknown>>
+    +createJob(user, dto): Promise<ApiResult<unknown>>
+    +listMyJobs(user): Promise<ApiResult<unknown>>
+    +updateJob(user, jobId, dto): Promise<ApiResult<unknown>>
+    +updateJobStatus(user, jobId, status): Promise<ApiResult<unknown>>
+    +deleteJob(user, jobId): Promise<ApiResult<unknown>>
+    +listApplicants(user, jobId, query): Promise<ApiResult<unknown>>
+    +updateApplicationStatus(user, applicationId, dto): Promise<ApiResult<unknown>>
+    +getProfile(user): Promise<ApiResult<unknown>>
+    +updateProfile(user, dto): Promise<ApiResult<unknown>>
+    +uploadLogo(user, file): Promise<ApiResult<unknown>>
+  }
+
+  class EmployerJobService <<@Injectable>> {
+    +create(employerId, dto): Promise<number>
+    +listMine(employerId): Promise<{data, count}>
+    +update(employerId, jobId, dto): Promise<void>
+    +updateStatus(employerId, jobId, status): Promise<void>
+    +remove(employerId, jobId): Promise<void>
+  }
+
+  class EmployerApplicantService <<@Injectable>> {
+    +listApplicants(employerId, jobId, query): Promise<{data, count}>
+    +updateApplicationStatus(employerId, applicationId, dto): Promise<void>
+    -buildQuery(jobId, query): SelectQueryBuilder<Application>
+    -loadSkills(seekerIds): Promise<Map<number, SkillRef[]>>
+  }
+
+  class EmployerProfileService <<@Injectable>> {
+    +getProfile(employerId): EmployerProfileDto
+    +updateProfile(employerId, dto): Promise<void>
+    +updateLogo(employerId, file): Promise<string>
+  }
+
+  class EmployerStatsService <<@Injectable>> {
+    +stats(employerId): EmployerStatsDto
+  }
+}
+
+EmployerController ..> EmployerJobService
+EmployerController ..> EmployerApplicantService
+EmployerController ..> EmployerProfileService
+EmployerController ..> EmployerStatsService
+EmployerJobService ..> Job
+EmployerJobService ..> JobSkill : «cascade»
+EmployerApplicantService ..> Application
+EmployerApplicantService ..> Job : «ownership check»
+EmployerApplicantService ..> SeekerSkill : «filter»
+EmployerProfileService ..> Employer
+EmployerProfileService ..> ImageStorage : «logo»
+EmployerStatsService ..> Job
+EmployerStatsService ..> Application
+
+' =====================================================================
+'  6. ADMIN + PUBLIC MODULES
+' =====================================================================
+package "admin module" #EAF3FF {
+  class AdminController <<@Controller('admin'), @Roles(ADMIN)>> {
+    +stats(): Promise<ApiResult<unknown>>
+    +employers(): Promise<ApiResult<unknown>>
+    +seekers(): Promise<ApiResult<unknown>>
+    +users(): Promise<ApiResult<unknown>>
+    +user(userId): Promise<ApiResult<unknown>>
+    +updateStatus(adminId, userId, isActive)
+    +deleteUser(adminId, userId)
+    +verify(adminId, jobId)
+    +unverify(adminId, jobId)
+    +deleteJob(adminId, jobId)
+    +jobs(query: AdminJobsQueryDto)
+    +logs(): Promise<ApiResult<unknown>>
+  }
+
+  class AdminService <<@Injectable>> {
+    +stats(): Promise<PlatformStats>
+    +listJobs(query): Promise<{data, count}>
+    +listUsers()
+    +getUser(userId): Promise<UserDetail>
+    +updateUserStatus(adminId, userId, isActive): Promise<void>
+    +deleteUser(adminId, userId): Promise<void>
+    +listEmployers()
+    +listSeekers()
+    +verifyJob(adminId, jobId): Promise<void>
+    +unverifyJob(adminId, jobId): Promise<void>
+    +deleteJob(adminId, jobId): Promise<void>
+    +listLogs()
+    -log(adminId, actionType, targetTable, targetId): Promise<void>
+  }
+}
+
+package "public module" #EAF3FF {
+  class PublicController <<@Controller('jobs'), @Public()>> {
+    +findJobs(query): Promise<ApiResult<unknown>>
+    +findLandingJobs(query): Promise<ApiResult<unknown>>
+    +findJobById(jobId): Promise<ApiResult<unknown>>
+    +findSkills(query): Promise<ApiResult<unknown>>
+  }
+
+  class PublicService <<@Injectable>> {
+    +findJobs(query, defaultLimit?): Promise<{data, count}>
+    +findJobById(jobId): Promise<PublicJobDto>
+    +findSkills(search?): Promise<Skill[]>
+    -baseQuery(): SelectQueryBuilder<Job>
+    -applyFilters(qb, query): void
+  }
+}
+
+AdminController ..> AdminService
+AdminService ..> User
+AdminService ..> Job : «verify/unverify/delete»
+AdminService ..> AdminLog : «append audit»
+AdminService ..> Employer
+AdminService ..> JobSeeker
+PublicController ..> PublicService
+PublicService ..> Job : «verified & open»
+PublicService ..> Employer
+PublicService ..> Skill
+
+' =====================================================================
+'  7. STORAGE MODULE (Strategy pattern)
+' =====================================================================
+package "storage module" #FFF3E6 {
+
+  abstract class ImageStorage <<abstract strategy>> {
+    {abstract} +upload(buffer: Buffer, folder: string, originalName: string): Promise<string>
+  }
+
+  class LocalImageStorage <<strategy: disk>> {
+    -rootDir : string
+    +upload(buffer, folder, originalName): Promise<string>
+  }
+
+  class CloudinaryImageStorage <<strategy: CDN>> {
+    -cloudinary : Cloudinary
+    +upload(buffer, folder, originalName): Promise<string>
+  }
+
+  class ResumeStorageService <<@Injectable>> {
+    +save(buffer, originalName?): StoredFile
+    +resolve(storedPath): string
+    +downloadName(storedPath, fallback): string
+    +stream(absolutePath, filename, response): Promise<void>
+  }
+
+  class ResumeDownloadController <<@Controller('resume-download')>> {
+    +download(applicationId, user, response): Promise<void>
+  }
+
+  ImageStorage <|-- LocalImageStorage
+  ImageStorage <|-- CloudinaryImageStorage
+}
+
+ResumeDownloadController ..> ResumeStorageService
+SeekerProfileService ..> ResumeStorageService : «resume upload»
+ResumeDownloadController ..> Application : «authorisation»
+note bottom of ImageStorage
+  **Strategy pattern.** Abstract factory provider in
+  storage.module.ts selects the concrete implementation
+  (local disk or Cloudinary) from configuration and
+  injects it into profile services.
+end note
+
+' =====================================================================
+'  8. PERSISTENCE (entities, anemic) + module wiring
+' =====================================================================
+package "Entities (TypeORM, anemic)" #F2F9EA {
+  class User <<entity>> {
+    +userId : int {PK}
+    +email : string {unique}
+    -passwordHash : string
+    +role : UserRole
+    +isActive : boolean
+    +createdAt : datetime
+  }
+  class JobSeeker <<entity>> {
+    +seekerId : int {PK, = user_id}
+    +fullName : string?
+    +phoneNumber : string?
+    +education : string?
+    +experienceYears : int?
+    +resumePath : string?
+    +resumeFilename : string?
+    +profilePictureUrl : string?
+  }
+  class Employer <<entity>> {
+    +employerId : int {PK, = user_id}
+    +companyName : string?
+    +industry : string?
+    +companySize : CompanySize?
+    +companyLocation : string?
+    +companyWebsite : string?
+    +profilePictureUrl : string?
+  }
+  class Job <<entity>> {
+    +jobId : int {PK}
+    +employerId : int {FK}
+    +title : string?
+    +description : text?
+    +location : string?
+    +jobType : JobType?
+    +salaryMin : int?
+    +salaryMax : int?
+    +applicationCount : int
+    +status : JobStatus
+    +isVerified : boolean
+    +verifiedBy : int?
+    +postedAt : datetime
+  }
+  class Application <<entity>> {
+    +applicationId : int {PK}
+    +jobId : int {FK}
+    +seekerId : int {FK}
+    +status : ApplicationStatus
+    +appliedAt : datetime
+  }
+  class Skill <<entity>> {
+    +skillId : int {PK}
+    +skillName : string {unique}
+  }
+  class JobSkill <<entity, M:N join>> {
+    +jobId : int {PK, FK}
+    +skillId : int {PK, FK}
+  }
+  class SeekerSkill <<entity, M:N join>> {
+    +seekerId : int {PK, FK}
+    +skillId : int {PK, FK}
+    +proficiency : SkillProficiency
+  }
+  class SavedJob <<entity, M:N join>> {
+    +seekerId : int {PK, FK}
+    +jobId : int {PK, FK}
+    +savedAt : datetime
+  }
+  class AdminLog <<entity>> {
+    +logId : int {PK}
+    +adminId : int {FK}
+    +actionType : string?
+    +targetTable : string?
+    +targetId : int?
+    +actionTime : datetime
+  }
+}
+
+User "1" *-- "0..1" JobSeeker : shared PK
+User "1" *-- "0..1" Employer : shared PK
+User "1" -->> "0..*" AdminLog : adminId
+Employer "1" -->> "0..*" Job : employerId
+Job "1" -->> "0..*" JobSkill
+Skill "1" -->> "0..*" JobSkill
+JobSeeker "1" -->> "0..*" Application
+Job "1" -->> "0..*" Application
+JobSeeker "1" -->> "0..*" SeekerSkill
+Skill "1" -->> "0..*" SeekerSkill
+JobSeeker "1" -->> "0..*" SavedJob
+Job "1" -->> "0..*" SavedJob
+
+' =====================================================================
+'  9. ENUMS
+' =====================================================================
+package "Enumerations" #EEEEEE {
+  enum UserRole <<enumeration>> { JOBSEEKER  EMPLOYER  ADMIN }
+  enum JobType <<enumeration>> { FULL_TIME  PART_TIME  INTERNSHIP }
+  enum JobStatus <<enumeration>> { OPEN  CLOSED }
+  enum ApplicationStatus <<enumeration>> { APPLIED  SHORTLISTED  REJECTED  HIRED }
+  enum SkillProficiency <<enumeration>> { BEGINNER  INTERMEDIATE  ADVANCED }
+  enum CompanySize <<enumeration>> { SIZE_1_10  SIZE_11_50  SIZE_51_200  SIZE_201_500  SIZE_500_PLUS }
+}
+
+User --> UserRole : role
+Job --> JobType
+Job --> JobStatus
+Application --> ApplicationStatus
+SeekerSkill --> SkillProficiency
+Employer --> CompanySize
+
+' =====================================================================
+'  10. NOTES & LEGEND
+' =====================================================================
+note as N1
+  **OOP principles in this design**
+  1. *Encapsulation* - private fields (-) + private helper methods;
+     entities hide passwordHash from SELECTs.
+  2. *Abstraction* - ImageStorage abstract class, DTO/mapper interfaces.
+  3. *Inheritance* - HttpException -> domain errors;
+     ImageStorage -> Local/Cloudinary strategies.
+  4. *Polymorphism* - guards implement CanActivate, interceptor
+     implements NestInterceptor, filter implements ExceptionFilter;
+     NestJS invokes them uniformly.
+  5. *Dependency Inversion / DI* - every collaborator is constructor
+     injected; services depend on abstractions, not concretes.
+  6. *Separation of concerns* - Controller (HTTP) -> Service (logic)
+     -> Repository/Entity (persistence); DTOs in, DTOs out.
+end note
+
+note bottom of User
+  Entities are **anemic** (verified in source): no methods,
+  only columns + navigation properties. All behaviour is in
+  the service layer.
+end note
+
+legend bottom
+  |= Notation |= Meaning |
+  | + / - / # / ~ | public / private / protected / package |
+  | italic name | interface or abstract class |
+  | «stereotype» | NestJS role: @Injectable, @Controller, @Catch, DTO, entity |
+  | {abstract} {static} | member modifiers |
+  | ..|> | implements (interface) |
+  | --|> | extends (class inheritance) |
+  | *-- | composition (cascade delete) |
+  | -->> | directed association (foreign key) |
+  | ..> | dependency / uses |
+  | "1" "0..*" | multiplicity |
+end legend
+
+@enduml

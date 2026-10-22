@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnp.*
+
+# Builds & Caches
+dist/
+build/
+.angular/
+out-tsc/
+*.tsbuildinfo
+*.buildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.backup*
+.env.*.backup*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Editors & OS
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Backups & Temporary files
+*.bak
+*.backup
+*.backup.*
+*.tmp
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Uploads (runtime artefacts)
+uploads/*
+!uploads/.gitkeep
+**/uploads/*
+!**/uploads/.gitkeep
+!**/uploads/**/.gitkeep
+
+# Docker volumes
+db_data/

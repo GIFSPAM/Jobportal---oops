@@ -1,0 +1,286 @@
+@startuml JobPortal_Domain_Classes
+
+title Job Portal - Domain Class Diagram\n(TypeORM entities, backend/src/database/entities)
+
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowOff
+skinparam roundCorner 4
+skinparam nodesep 60
+skinparam ranksep 80
+skinparam wrapWidth 280
+skinparam defaultFontSize 12
+skinparam classFontSize 13
+skinparam classFontStyle bold
+skinparam class {
+  BackgroundColor #FEFEFE
+  BorderColor #333333
+  ArrowColor #333333
+}
+skinparam package {
+  BorderColor #666666
+}
+hide circle
+hide empty members
+
+' =====================================================================
+'  1. ENUMERATIONS  (backend/src/common/enums/domain.enum.ts)
+' =====================================================================
+package "Enumerations" {
+
+  enum UserRole <<enumeration>> {
+    JOBSEEKER
+    EMPLOYER
+    ADMIN
+  }
+
+  enum JobType <<enumeration>> {
+    FULL_TIME
+    PART_TIME
+    INTERNSHIP
+  }
+
+  enum JobStatus <<enumeration>> {
+    OPEN
+    CLOSED
+  }
+
+  enum ApplicationStatus <<enumeration>> {
+    APPLIED
+    SHORTLISTED
+    REJECTED
+    HIRED
+  }
+
+  enum SkillProficiency <<enumeration>> {
+    BEGINNER
+    INTERMEDIATE
+    ADVANCED
+  }
+
+  enum CompanySize <<enumeration>> {
+    SIZE_1_10
+    SIZE_11_50
+    SIZE_51_200
+    SIZE_201_500
+    SIZE_500_PLUS
+  }
+}
+
+' =====================================================================
+'  2. IDENTITY & ACCESS
+' =====================================================================
+package "Identity & Access" {
+
+  class User <<entity, table Users>> {
+    +userId : number {PK, auto}
+    +email : string {unique}
+    -passwordHash : string {select false}
+    +role : UserRole {not null}
+    +isActive : boolean = true
+    +createdAt : Date = now
+    --
+    +seeker? : JobSeeker
+    +employer? : Employer
+    +adminLogs? : AdminLog[]
+  }
+
+  class JobSeeker <<entity, table JobSeekers>> {
+    +seekerId : number {PK, shared with user_id}
+    +fullName : string?
+    +phoneNumber : string?
+    +education : string?
+    +experienceYears : number?
+    +resumePath : string?
+    +resumeFilename : string?
+    +profilePictureUrl : string?
+    --
+    +seekerSkills? : SeekerSkill[]
+    +applications? : Application[]
+    +savedJobs? : SavedJob[]
+  }
+
+  class Employer <<entity, table Employers>> {
+    +employerId : number {PK, shared with user_id}
+    +companyName : string?
+    +companyPhone : string?
+    +industry : string?
+    +companySize : CompanySize?
+    +companyLocation : string?
+    +companyWebsite : string?
+    +profilePictureUrl : string?
+    --
+    +jobs? : Job[]
+  }
+
+  class AdminLog <<entity, table AdminLogs>> {
+    +logId : number {PK, auto}
+    +adminId : number {FK}
+    +actionType : string?
+    +targetTable : string?
+    +targetId : number?
+    +actionTime : Date = now
+    --
+    +admin : User
+  }
+}
+
+' =====================================================================
+'  3. JOBS & SKILLS
+' =====================================================================
+package "Jobs & Skills" {
+
+  class Job <<entity, table Jobs>> {
+    +jobId : number {PK, auto}
+    +employerId : number {FK}
+    +title : string?
+    +description : text?
+    +location : string?
+    +jobType : JobType?
+    +salaryMin : number?
+    +salaryMax : number?
+    +applicationCount : number = 0
+    +status : JobStatus = OPEN
+    +isVerified : boolean = false
+    +verifiedBy : number?
+    +verifiedAt : Date?
+    +postedAt : Date = now
+    --
+    +employer : Employer
+    +jobSkills? : JobSkill[]
+    +applications? : Application[]
+    +savedBy? : SavedJob[]
+  }
+
+  class Skill <<entity, table Skills>> {
+    +skillId : number {PK, auto}
+    +skillName : string {unique, normalized}
+    --
+    +jobSkills? : JobSkill[]
+    +seekerSkills? : SeekerSkill[]
+  }
+
+  class JobSkill <<entity, association class, table JobSkills>> {
+    +jobId : number {PK, FK}
+    +skillId : number {PK, FK}
+    --
+    +job : Job
+    +skill : Skill
+  }
+
+  class SeekerSkill <<entity, association class, table SeekerSkills>> {
+    +seekerId : number {PK, FK}
+    +skillId : number {PK, FK}
+    +proficiency : SkillProficiency = BEGINNER
+    --
+    +seeker : JobSeeker
+    +skill : Skill
+  }
+
+  class SavedJob <<entity, association class, table SavedJobs>> {
+    +seekerId : number {PK, FK}
+    +jobId : number {PK, FK}
+    +savedAt : Date = now
+    --
+    +seeker : JobSeeker
+    +job : Job
+  }
+}
+
+' =====================================================================
+'  4. APPLICATIONS
+' =====================================================================
+package "Applications" {
+
+  class Application <<entity, table Applications>> {
+    +applicationId : number {PK, auto}
+    +jobId : number {FK}
+    +seekerId : number {FK}
+    +status : ApplicationStatus = APPLIED
+    +appliedAt : Date = now
+    --
+    +job : Job
+    +seeker : JobSeeker
+  }
+}
+
+' =====================================================================
+'  5. RELATIONSHIPS
+'     *--  composition (owner side, cascade delete)
+'     -->> directed association (navigable)
+'     ..>  dependency / «use»
+' =====================================================================
+
+' --- identity ---------------------------------------------------------
+User "1" *-- "0..1" JobSeeker : seeker profile\n(shared PK, cascade)
+User "1" *-- "0..1" Employer : employer profile\n(shared PK, cascade)
+User "1" -->> "0..*" AdminLog : adminLogs
+
+User --> UserRole : «use» role
+JobSeeker ..> Employer : «role exclusivity»\nexactly one per User
+Employer --> CompanySize : «use» companySize
+
+' --- jobs -------------------------------------------------------------
+Employer "1" -->> "0..*" Job : jobs
+Job "1" *-- "0..*" JobSkill : jobSkills
+Skill "1" *-- "0..*" JobSkill : required by
+Job --> JobType : «use» jobType
+Job --> JobStatus : «use» status
+
+' --- applications -----------------------------------------------------
+Job "1" -->> "0..*" Application : applications received
+JobSeeker "1" -->> "0..*" Application : applications submitted
+Application --> ApplicationStatus : «use» status
+
+' --- bookmarks --------------------------------------------------------
+JobSeeker "1" *-- "0..*" SavedJob : savedJobs
+Job "1" *-- "0..*" SavedJob : savedBy
+
+' --- skills -----------------------------------------------------------
+JobSeeker "1" *-- "0..*" SeekerSkill : seekerSkills
+Skill "1" -->> "0..*" SeekerSkill : held by
+
+' =====================================================================
+'  6. NOTES & LEGEND
+' =====================================================================
+note bottom of User
+  **Role modelling - no table inheritance.**
+  Variation between seekers and employers is expressed as a
+  **1:1 specialization by shared primary key**: JobSeeker.seeker_id
+  and Employer.employer_id are both Users.user_id.
+  User.role is the discriminator; insert/update cascade from User.
+end note
+
+note bottom of Application
+  **Uniqueness**
+  Unique index (job_id, seeker_id): one application per seeker per job.
+  JobSkill, SeekerSkill and SavedJob use composite primary keys
+  and behave as M:N join tables.
+end note
+
+note bottom of Job
+  **Anemic entities**: these classes carry data only.
+  All behaviour lives in the service layer - see the companion
+  diagram jobportal-layered-architecture.puml.
+end note
+
+legend bottom
+  |= Notation |= Meaning |
+  | + | public |
+  | - | private |
+  | # | protected |
+  | ~ | package-private |
+  | «stereotype» | class tag: entity, table, association class, enumeration |
+  | {PK} {FK} {unique} | key and constraint annotations |
+  | ? | nullable attribute |
+  | = value | default value |
+  | *-- | composition (whole to part, cascade delete) |
+  | o-- | aggregation |
+  | -->> | directed association (navigable) |
+  | ..> | dependency, «use» |
+  | --|> | inheritance (extends) |
+  | ..|> | realization (implements) |
+  | "1" "0..*" | multiplicity |
+end legend
+
+@enduml

@@ -1,0 +1,290 @@
+@startuml JobPortal_Class_Diagram
+
+title Job Portal - Class Diagram (main classes)\nReal code: entities carry data only, behaviour lives in services\n(backend/src/database/entities + backend/src/modules)
+
+skinparam classAttributeIconSize 0
+skinparam shadowOff
+skinparam roundCorner 4
+skinparam nodesep 50
+skinparam ranksep 70
+skinparam wrapWidth 240
+skinparam defaultFontSize 11
+skinparam classFontSize 12
+skinparam classFontStyle bold
+skinparam packageStyle rectangle
+hide circle
+
+' =====================================================================
+'  ENUMERATIONS  (src/common/enums/domain.enum.ts)
+' =====================================================================
+package "Enumerations" {
+  enum UserRole <<enumeration>> { JOBSEEKER  EMPLOYER  ADMIN }
+  enum JobType <<enumeration>> { FULL_TIME  PART_TIME  INTERNSHIP }
+  enum JobStatus <<enumeration>> { OPEN  CLOSED }
+  enum ApplicationStatus <<enumeration>> { APPLIED  SHORTLISTED  REJECTED  HIRED }
+  enum SkillProficiency <<enumeration>> { BEGINNER  INTERMEDIATE  ADVANCED }
+  enum CompanySize <<enumeration>> { SIZE_1_10  SIZE_11_50  SIZE_51_200  SIZE_201_500  SIZE_500_PLUS }
+}
+
+' =====================================================================
+'  ENTITIES  (src/database/entities) - anemic, attributes only
+' =====================================================================
+package "Entities (TypeORM)" {
+
+  class User <<entity>> {
+    +userId : int {PK, auto}
+    +email : string {unique}
+    -passwordHash : string
+    +role : UserRole
+    +isActive : boolean
+    +createdAt : datetime
+  }
+
+  class JobSeeker <<entity>> {
+    +seekerId : int {PK, = user_id}
+    +fullName : string?
+    +phoneNumber : string?
+    +education : string?
+    +experienceYears : int?
+    +resumePath : string?
+    +resumeFilename : string?
+    +profilePictureUrl : string?
+  }
+
+  class Employer <<entity>> {
+    +employerId : int {PK, = user_id}
+    +companyName : string?
+    +companyPhone : string?
+    +industry : string?
+    +companySize : CompanySize?
+    +companyLocation : string?
+    +companyWebsite : string?
+    +profilePictureUrl : string?
+  }
+
+  class Job <<entity>> {
+    +jobId : int {PK, auto}
+    +employerId : int {FK}
+    +title : string?
+    +description : text?
+    +location : string?
+    +jobType : JobType?
+    +salaryMin : int?
+    +salaryMax : int?
+    +applicationCount : int
+    +status : JobStatus
+    +isVerified : boolean
+    +verifiedBy : int?
+    +verifiedAt : datetime?
+    +postedAt : datetime
+  }
+
+  class Application <<entity>> {
+    +applicationId : int {PK, auto}
+    +jobId : int {FK}
+    +seekerId : int {FK}
+    +status : ApplicationStatus
+    +appliedAt : datetime
+  }
+
+  class Skill <<entity>> {
+    +skillId : int {PK, auto}
+    +skillName : string {unique, normalized}
+  }
+
+  class JobSkill <<entity, association class>> {
+    +jobId : int {PK, FK}
+    +skillId : int {PK, FK}
+  }
+
+  class SeekerSkill <<entity, association class>> {
+    +seekerId : int {PK, FK}
+    +skillId : int {PK, FK}
+    +proficiency : SkillProficiency
+  }
+
+  class SavedJob <<entity, association class>> {
+    +seekerId : int {PK, FK}
+    +jobId : int {PK, FK}
+    +savedAt : datetime
+  }
+
+  class AdminLog <<entity>> {
+    +logId : int {PK, auto}
+    +adminId : int {FK}
+    +actionType : string?
+    +targetTable : string?
+    +targetId : int?
+    +actionTime : datetime
+  }
+}
+
+' =====================================================================
+'  BEHAVIOUR  (src/modules) - real methods from the source
+' =====================================================================
+package "Auth" {
+  class AuthService <<service>> {
+    +register(dto: RegisterDto): ApiResult<AuthResponse>
+    +login(dto: LoginDto): ApiResult<AuthResponse>
+    +signToken(user: User): Promise<string>
+    -assertRoleRequirements(dto): void
+    -isDuplicateKeyError(error): boolean
+  }
+
+  class SessionService <<service>> {
+    +resolve(token: string): Promise<AuthenticatedUser>
+  }
+}
+
+package "Seeker module" {
+  class SeekerProfileService <<service>> {
+    +getProfile(seekerId): SeekerProfileDto
+    +updateProfile(seekerId, dto): Promise<void>
+    +updateResume(seekerId, file): Promise<{path, filename}>
+    +getResume(seekerId): Promise<{absolutePath, filename}>
+    +updatePhoto(seekerId, file): Promise<string>
+    +updateSkills(seekerId, dto): Promise<void>
+  }
+
+  class SeekerApplicationService <<service>> {
+    +apply(seekerId, jobId): Promise<{application_id, seeker_id}>
+    +list(seekerId): Promise<{data, count}>
+    +revoke(seekerId, applicationId): Promise<void>
+    +jobMatch(seekerId, jobId): Promise<JobMatchDto>
+  }
+
+  class SeekerSavedJobService <<service>> {
+    +save(seekerId, jobId): Promise<void>
+    +remove(seekerId, jobId): Promise<void>
+    +list(seekerId): Promise<{data, count}>
+  }
+
+  class SeekerStatsService <<service>> {
+    +stats(seekerId): SeekerStatsDto
+  }
+}
+
+package "Employer module" {
+  class EmployerJobService <<service>> {
+    +create(employerId, dto: CreateJobDto): Promise<number>
+    +listMine(employerId): Promise<{data, count}>
+    +update(employerId, jobId, dto): Promise<void>
+    +updateStatus(employerId, jobId, status): Promise<void>
+    +remove(employerId, jobId): Promise<void>
+  }
+
+  class EmployerApplicantService <<service>> {
+    +listApplicants(employerId, jobId, query): Promise<{data, count}>
+    +updateApplicationStatus(employerId, applicationId, dto): Promise<void>
+    -buildQuery(jobId, query): SelectQueryBuilder<Application>
+    -loadSkills(seekerIds): Promise<Map<number, SkillRef[]>>
+  }
+
+  class EmployerProfileService <<service>> {
+    +getProfile(employerId): EmployerProfileDto
+    +updateProfile(employerId, dto): Promise<void>
+    +updateLogo(employerId, file): Promise<string>
+  }
+
+  class EmployerStatsService <<service>> {
+    +stats(employerId): EmployerStatsDto
+  }
+}
+
+package "Admin module" {
+  class AdminService <<service>> {
+    +stats(): Promise<PlatformStats>
+    +listJobs(query): Promise<{data, count}>
+    +listUsers()
+    +getUser(userId): Promise<UserDetail>
+    +updateUserStatus(adminId, userId, isActive): Promise<void>
+    +deleteUser(adminId, userId): Promise<void>
+    +listEmployers()
+    +listSeekers()
+    +verifyJob(adminId, jobId): Promise<void>
+    +unverifyJob(adminId, jobId): Promise<void>
+    +deleteJob(adminId, jobId): Promise<void>
+    +listLogs()
+    -log(adminId, actionType, targetTable, targetId): Promise<void>
+  }
+}
+
+package "Public module" {
+  class PublicService <<service>> {
+    +findJobs(query, defaultLimit?): Promise<{data, count}>
+    +findJobById(jobId): Promise<PublicJobDto>
+    +findSkills(search?): Promise<Skill[]>
+    -baseQuery(): SelectQueryBuilder<Job>
+    -applyFilters(qb, query): void
+  }
+}
+
+' =====================================================================
+'  ENTITY RELATIONSHIPS  (*-- composition, -->> association)
+' =====================================================================
+User "1" *-- "0..1" JobSeeker : shared PK
+User "1" *-- "0..1" Employer : shared PK
+User "1" -->> "0..*" AdminLog : adminId
+User --> UserRole : role
+Employer "1" -->> "0..*" Job : employerId
+Employer --> CompanySize : companySize
+Job --> JobType : jobType
+Job --> JobStatus : status
+Job "1" -->> "0..*" JobSkill : jobId
+Skill "1" -->> "0..*" JobSkill : skillId
+JobSeeker "1" -->> "0..*" Application : seekerId
+Job "1" -->> "0..*" Application : jobId
+Application --> ApplicationStatus : status
+JobSeeker "1" -->> "0..*" SeekerSkill : seekerId
+Skill "1" -->> "0..*" SeekerSkill : skillId
+SeekerSkill --> SkillProficiency : proficiency
+JobSeeker "1" -->> "0..*" SavedJob : seekerId
+Job "1" -->> "0..*" SavedJob : jobId
+
+' =====================================================================
+'  SERVICE DEPENDENCIES  (..> = reads/writes the entity)
+' =====================================================================
+AuthService ..> User : "create / verify credentials"
+SessionService ..> User : "resolve token -> identity"
+SeekerProfileService ..> JobSeeker
+SeekerApplicationService ..> Application
+SeekerApplicationService ..> Job
+SeekerApplicationService ..> SeekerSkill : "job match scoring"
+SeekerSavedJobService ..> SavedJob
+SeekerStatsService ..> Application
+EmployerJobService ..> Job
+EmployerApplicantService ..> Application
+EmployerApplicantService ..> Job : "ownership check"
+EmployerApplicantService ..> SeekerSkill : "filter by skill"
+EmployerProfileService ..> Employer
+EmployerStatsService ..> Job
+EmployerStatsService ..> Application
+AdminService ..> User
+AdminService ..> Job : "verify / unverify / delete"
+AdminService ..> AdminLog : "append audit trail"
+AdminService ..> Employer
+AdminService ..> JobSeeker
+PublicService ..> Job : "verified & open only"
+PublicService ..> Skill
+
+note bottom of User
+  **Anemic model** (verified against source): entity classes
+  contain no operations - every method shown in this diagram
+  belongs to a service. Associations to services are real
+  constructor dependencies from the NestJS modules.
+end note
+
+legend bottom
+  |= Notation |= Meaning |
+  | + | public |
+  | - | private |
+  | «stereotype» | class tag: entity, service, enumeration |
+  | {PK} {FK} | primary key / foreign key |
+  | ? | nullable column |
+  | *-- | composition (cascade delete) |
+  | -->> | directed association (FK) |
+  | ..> | dependency: service reads/writes entity |
+  | "1" "0..*" | multiplicity |
+end legend
+
+@enduml

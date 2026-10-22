@@ -1,0 +1,736 @@
+[
+  {
+    "slide": 25,
+    "tables": [
+      [
+        [
+          "ID",
+          "UC-01"
+        ],
+        [
+          "Brief Description",
+          "The job seekers and employers can register and login to their profiles."
+        ],
+        [
+          "Primary Actor",
+          "Public User"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The user is not already registered with the provided email address (for registration).\u000b2. The user has a valid email address and internet connection.\u000b3. The user has already registered an account (for login).\u000b4. The user's account is active (for login)."
+        ],
+        [
+          "Main Flow",
+          "REGISTER:\u000b1. The user opens the job portal and clicks the Register button.\u000b2. The system displays the registration form.\u000b3. The user enters the required details (name, email, password, role) and clicks the Sign Up / Register button.\u000b4. The system validates the entered information via Verify Credentials (<<include>>).\u000b5. The system creates a new user account.\u000b6. The user is redirected to the login page (or logged in automatically).\u000b\u000bLOGIN:\u000b1. The user opens the job portal and clicks the Login button.\u000b2. The system displays the login form.\u000b3. The user enters the registered email and password and clicks the Login button.\u000b4. The system validates the credentials via Verify Credentials (<<include>>).\u000b5. The system authenticates the user.\u000b6. The system redirects the user to the dashboard / home page based on their role."
+        ],
+        [
+          "Post Conditions",
+          "REGISTER: A new user account is successfully created in the system.\u000b\u000bLOGIN: The user is successfully authenticated and redirected to their respective dashboard."
+        ],
+        [
+          "Alternative Flows",
+          "1. If the email is already registered, the system displays an error message.\u000b2. If credentials are invalid, the system displays an authentication failure message.\u000b3. If the account is locked or inactive, the system denies access and notifies the user."
+        ]
+      ],
+      [
+        [
+          "ID",
+          "UC-02"
+        ],
+        [
+          "Brief Description",
+          "Validates user credentials during registration and login processes."
+        ],
+        [
+          "Primary Actor",
+          "System"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The user has submitted credentials for registration or login."
+        ],
+        [
+          "Main Flow",
+          "1. The system receives the entered email and password.\u000b2. The system validates the email format and password strength (for registration).\u000b3. The system checks if the email already exists (for registration) or matches existing records (for login).\u000b4. The system verifies the password hash against the stored value (for login).\u000b5. The system returns a verification status to the calling use case."
+        ],
+        [
+          "Post Conditions",
+          "1. Credentials are validated successfully, or an appropriate error is returned."
+        ],
+        [
+          "Alternative Flows",
+          "1. Invalid email format → prompt user to re-enter.\u000b2. Weak password → prompt for stronger password.\u000b3. Incorrect credentials → deny access."
+        ]
+      ]
+    ]
+  },
+  {
+    "slide": 26,
+    "tables": [
+      [
+        [
+          "ID",
+          "UC-03"
+        ],
+        [
+          "Brief Description",
+          "Allows a job seeker to access and view their personalized dashboard after logging into the system. The dashboard displays profile information, job recommendations, applied jobs, saved jobs, and notifications."
+        ],
+        [
+          "Primary Actor",
+          "Job Seeker"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The job seeker is registered.\u000b2. The job seeker is logged in successfully.\u000b3. The system is operational and connected to the database."
+        ],
+        [
+          "Main Flow",
+          "1. The job seeker logs into the system.\u000b2. The system retrieves the job seeker's profile and dashboard data from the database.\u000b3. The system displays the dashboard with profile details, recommended jobs, applied jobs, saved jobs, and notifications.\u000b4. The job seeker views the dashboard and selects the desired option for further actions."
+        ],
+        [
+          "Post Conditions",
+          "1. The job seeker's dashboard is successfully displayed.\u000b2. The latest profile information, job recommendations, applied jobs, saved jobs, and notifications are retrieved and shown.\u000b3. The job seeker can access and navigate to other dashboard features."
+        ],
+        [
+          "Alternative Flows",
+          "1. If the database connection fails, the system displays an error message.\u000b2. If the profile is incomplete, the system prompts the user to complete it."
+        ]
+      ],
+      [
+        [
+          "ID",
+          "UC-04"
+        ],
+        [
+          "Brief Description",
+          "Allows a job seeker to browse available job postings and filter them based on criteria such as job title, location, company, or experience level."
+        ],
+        [
+          "Primary Actor",
+          "Job Seeker"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The job seeker is logged into the system.\u000b2. The system is operational and connected to the database.\u000b3. Job postings are available in the system."
+        ],
+        [
+          "Main Flow",
+          "1. The job seeker opens the Browse Jobs page.\u000b2. The system displays all available job listings.\u000b3. The job seeker enters search keywords or selects filter criteria (location, job type, salary, experience level, etc.).\u000b4. The system processes the selected filters.\u000b5. The system retrieves matching job listings from the database.\u000b6. The system displays the filtered job results.\u000b7. The job seeker browses the results and selects a job to view its details."
+        ],
+        [
+          "Post Conditions",
+          "1. The filtered list of jobs is displayed to the job seeker.\u000b2. The selected search and filter criteria are applied successfully.\u000b3. The job seeker can view job details or proceed to apply for a job."
+        ],
+        [
+          "Alternative Flows",
+          "1. If no jobs match the filters, the system displays a 'No results found' message.\u000b2. If the database is unreachable, the system shows an error notification."
+        ]
+      ]
+    ]
+  },
+  {
+    "slide": 27,
+    "tables": [
+      [
+        [
+          "ID",
+          "UC-05"
+        ],
+        [
+          "Brief Description",
+          "Allows a job seeker to view the full details of a specific job posting including description, requirements, salary, company info, and application instructions."
+        ],
+        [
+          "Primary Actor",
+          "Job Seeker"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The job seeker is logged into the system.\u000b2. The job seeker is on the browse jobs or dashboard page.\u000b3. Job postings are available in the system."
+        ],
+        [
+          "Main Flow",
+          ""
+        ],
+        [
+          "Post Conditions",
+          ""
+        ],
+        [
+          "Alternative Flows",
+          "1. The job seeker clicks on a job listing from the browse results or recommendations.\u000b2. The system retrieves the detailed job information from the database.\u000b3. The system displays the job details page (title, description, requirements, salary range, location, company, posted date, deadline).\u000b4. The job seeker reviews the details.\u000b5. The system optionally displays View Skill Match Scoring (<<extend>>) if the seeker has uploaded a resume."
+        ],
+        [
+          "",
+          "1. The job details are successfully displayed.\u000b2. The job seeker can proceed to apply, save, or return to browsing."
+        ]
+      ],
+      [
+        [
+          "ID",
+          "UC-06"
+        ],
+        [
+          "Brief Description",
+          "Allows a job seeker to upload a new PDF resume, replace an existing one, or delete their resume from the system."
+        ],
+        [
+          "Primary Actor",
+          "Job Seeker"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The job seeker is logged into the system.\u000b2. The job seeker has a valid PDF file (for upload)."
+        ],
+        [
+          "Main Flow",
+          "UPLOAD:\u000b1. The job seeker navigates to the Profile / Resume section.\u000b2. The system displays the current resume status (uploaded / not uploaded).\u000b3. The job seeker clicks Upload / Replace Resume and selects a PDF file.\u000b4. The system validates the file type (PDF) and size.\u000b5. The system stores the resume file and updates the profile record.\u000b6. The system displays a success confirmation.\u000b\u000bDELETE:\u000b1. The job seeker clicks Delete Resume.\u000b2. The system prompts for confirmation.\u000b3. Upon confirmation, the system removes the resume file and updates the profile."
+        ],
+        [
+          "Post Conditions",
+          "1. The resume is successfully uploaded, replaced, or deleted.\u000b2. The profile is updated with the latest resume reference."
+        ],
+        [
+          "Alternative Flows",
+          "1. Invalid file type → system rejects and prompts for PDF.\u000b2. File size exceeds limit → system requests a smaller file.\u000b3. Upload fails → system shows an error and allows retry."
+        ]
+      ]
+    ]
+  },
+  {
+    "slide": 28,
+    "tables": [
+      [
+        [
+          "ID",
+          "UC-07"
+        ],
+        [
+          "Brief Description",
+          "Allows a job seeker to submit an application for an open job or withdraw a previously submitted application."
+        ],
+        [
+          "Primary Actor",
+          "Job Seeker"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The job seeker is logged into the system.\u000b2. The job seeker has viewed the job details.\u000b3. A resume is uploaded (for apply).\u000b4. The job post status is Open.\u000b5. The job seeker has already applied (for withdraw)."
+        ],
+        [
+          "Main Flow",
+          "APPLY:\u000b1. The job seeker clicks the Apply button on the job details page.\u000b2. The system verifies the job is open and the user has a resume.\u000b3. The system records the application with timestamp and resume reference.\u000b4. The system updates the job seeker's applied jobs list.\u000b5. The system notifies the employer.\u000b6. The system displays a confirmation to the job seeker.\u000b\u000bWITHDRAW:\u000b1. The job seeker navigates to Applied Jobs and selects an application.\u000b2. The job seeker clicks Withdraw Application.\u000b3. The system prompts for confirmation.\u000b4. Upon confirmation, the system removes / marks the application as withdrawn.\u000b5. The system notifies the employer of the withdrawal.\u000b6. The system updates the seeker's dashboard."
+        ],
+        [
+          "Post Conditions",
+          "1. The application is successfully submitted or withdrawn.\u000b2. All relevant parties are notified.\u000b3. Dashboard and statistics are updated."
+        ],
+        [
+          "Alternative Flows",
+          "1. Job is closed → system prevents application.\u000b2. Already applied → system prevents duplicate application.\u000b3. Withdrawal deadline passed → system denies withdrawal."
+        ]
+      ],
+      [
+        [
+          "ID",
+          "UC-08"
+        ],
+        [
+          "Brief Description",
+          "Analyzes the job seeker's resume skills against a job's requirements and displays a match percentage with a skill breakdown."
+        ],
+        [
+          "Primary Actor",
+          "System"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Main Flow",
+          "1. The job seeker has uploaded a PDF resume.\u000b2. The job posting has defined skill requirements.\u000b3. The user is viewing job details (seeker) or an application (employer)."
+        ],
+        [
+          "",
+          "1. The system extracts skills from the seeker's resume.\u000b2. The system compares extracted skills with the job's required skills.\u000b3. The system calculates a match percentage score.\u000b4. The system generates a visual breakdown (matched skills, missing skills, additional skills).\u000b5. The system displays the score and breakdown to the user."
+        ],
+        [
+          "Post Conditions",
+          "1. The skill match score is calculated and displayed.\u000b2. The user can make an informed decision based on the score."
+        ],
+        [
+          "Alternative Flows",
+          "1. No resume uploaded → system prompts to upload a resume.\u000b2. No skills detected in resume → system shows a low score with a note.\u000b3. Job has no skill requirements → match score is not applicable."
+        ]
+      ]
+    ]
+  },
+  {
+    "slide": 29,
+    "tables": [
+      [
+        [
+          "ID",
+          "UC-09"
+        ],
+        [
+          "Brief Description",
+          "Allows a job seeker to save or bookmark job postings for quick access later from their dashboard."
+        ],
+        [
+          "Primary Actor",
+          "Job Seeker"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The job seeker is logged into the system.\u000b2. The job seeker is viewing a job listing or job details page."
+        ],
+        [
+          "Main Flow",
+          "SAVE:\u000b1. The job seeker clicks the Save / Bookmark icon on a job listing.\u000b2. The system adds the job to the seeker's saved jobs list.\u000b3. The system updates the bookmark icon state to 'saved'.\u000b4. The system displays a confirmation message.\u000b\u000bUNSAVE:\u000b1. The job seeker clicks the saved bookmark icon again.\u000b2. The system removes the job from the saved list.\u000b3. The system updates the icon and confirms removal."
+        ],
+        [
+          "Post Conditions",
+          "1. The job is successfully added to or removed from the saved jobs list.\u000b2. The saved jobs list on the dashboard is updated."
+        ],
+        [
+          "Alternative Flows",
+          "1. Job already saved → system removes the bookmark (toggle behavior).\u000b2. Job is closed or deleted → system removes it from saved list and notifies the user."
+        ]
+      ],
+      [
+        [
+          "ID",
+          "UC-10"
+        ],
+        [
+          "Brief Description",
+          "Allows a job seeker to update their personal profile information and upload or change their profile photo."
+        ],
+        [
+          "Primary Actor",
+          "Job Seeker"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The job seeker is logged into the system.\u000b2. The job seeker has navigated to the profile settings page."
+        ],
+        [
+          "Main Flow",
+          "1. The job seeker clicks Edit Profile.\u000b2. The system displays the current profile information in an editable form.\u000b3. The job seeker updates fields (name, contact, skills, experience, education, etc.).\u000b4. The job seeker optionally uploads a new profile photo.\u000b5. The job seeker clicks Save Changes.\u000b6. The system validates the updated information.\u000b7. The system saves the changes to the database and updates the photo file.\u000b8. The system displays a success confirmation."
+        ],
+        [
+          "Post Conditions",
+          "1. The profile information and/or photo are successfully updated.\u000b2. The updated profile is reflected across the system (dashboard, applications)."
+        ],
+        [
+          "Alternative Flows",
+          "1. Invalid input format → system highlights errors and requests correction.\u000b2. Photo file too large or wrong format → system rejects and specifies requirements.\u000b3. Database update fails → system shows error and allows retry."
+        ]
+      ]
+    ]
+  },
+  {
+    "slide": 30,
+    "tables": [
+      [
+        [
+          "ID",
+          "UC-10"
+        ],
+        [
+          "Brief Description",
+          "Allows a job seeker to update their personal profile information and upload or change their profile photo."
+        ],
+        [
+          "Primary Actor",
+          "Job Seeker"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The job seeker is logged into the system.\u000b2. The job seeker has navigated to the profile settings page."
+        ],
+        [
+          "Main Flow",
+          "1. The job seeker clicks Edit Profile.\u000b2. The system displays the current profile information in an editable form.\u000b3. The job seeker updates fields (name, contact, skills, experience, education, etc.).\u000b4. The job seeker optionally uploads a new profile photo.\u000b5. The job seeker clicks Save Changes.\u000b6. The system validates the updated information.\u000b7. The system saves the changes to the database and updates the photo file.\u000b8. The system displays a success confirmation."
+        ],
+        [
+          "Post Conditions",
+          "1. The profile information and/or photo are successfully updated.\u000b2. The updated profile is reflected across the system (dashboard, applications)."
+        ],
+        [
+          "Alternative Flows",
+          "1. Invalid input format → system highlights errors and requests correction.\u000b2. Photo file too large or wrong format → system rejects and specifies requirements.\u000b3. Database update fails → system shows error and allows retry."
+        ]
+      ],
+      [
+        [
+          "ID",
+          "UC-12"
+        ],
+        [
+          "Brief Description",
+          "Allows an employer to create new job postings, edit existing ones, or remove them from the platform."
+        ],
+        [
+          "Primary Actor",
+          "Employer"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The employer is logged into the system.\u000b2. The employer has completed their corporate profile (for create).\u000b3. The job post exists (for update / delete)."
+        ],
+        [
+          "Main Flow",
+          "CREATE:\u000b1. The employer clicks Post a New Job.\u000b2. The system displays the job creation form.\u000b3. The employer enters job details (title, description, requirements, salary, location, type, skills, deadline).\u000b4. The employer clicks Publish.\u000b5. The system validates the information.\u000b6. The system saves the job post and sets status to Pending Moderation (or Open if auto-approved).\u000b7. The system displays a confirmation.\u000b\u000bUPDATE:\u000b1. The employer selects an existing job post and clicks Edit.\u000b2. The system displays the pre-filled form.\u000b3. The employer modifies fields and clicks Save Changes.\u000b4. The system validates and updates the job post.\u000b\u000bDELETE:\u000b1. The employer selects a job post and clicks Delete.\u000b2. The system prompts for confirmation.\u000b3. Upon confirmation, the system removes the job post and related applications."
+        ],
+        [
+          "Post Conditions",
+          "1. The job post is successfully created, updated, or deleted.\u000b2. The employer's job list and dashboard are updated.\u000b3. Applicants are notified if a job is deleted."
+        ],
+        [
+          "Alternative Flows",
+          "1. Missing required fields → system highlights errors.\u000b2. Job has active applications → system warns before deletion.\u000b3. Employer exceeds posting limit → system shows upgrade prompt."
+        ]
+      ]
+    ]
+  },
+  {
+    "slide": 31,
+    "tables": [
+      [
+        [
+          "ID",
+          "UC-13"
+        ],
+        [
+          "Brief Description",
+          "Allows an employer to quickly change the status of a job post between Open (accepting applications) and Closed (no longer accepting applications)."
+        ],
+        [
+          "Primary Actor",
+          "Employer"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The employer is logged in.\u000b2. The job post exists in the system.\u000b3. The job post is not deleted or pending moderation."
+        ],
+        [
+          "Main Flow",
+          "1. The employer navigates to My Job Posts.\u000b2. The system displays the list of job posts with their current status.\u000b3. The employer clicks the Toggle Status switch next to a job post.\u000b4. The system updates the job status (Open → Closed or Closed → Open).\u000b5. The system logs the status change.\u000b6. The system displays a confirmation and updates the job listing visibility."
+        ],
+        [
+          "Post Conditions",
+          "1. The job post status is successfully updated.\u000b2. The job is visible/invisible to job seekers based on the new status.\u000b3. The employer dashboard reflects the updated count of active jobs."
+        ],
+        [
+          "Alternative Flows",
+          "1. Job is pending moderation → toggle is disabled.\u000b2. Job has a scheduled deadline → system warns that toggling overrides the schedule."
+        ]
+      ],
+      [
+        [
+          "ID",
+          "UC-14"
+        ],
+        [
+          "Brief Description",
+          "Allows an employer to view, review, and update the status of applications received for their job postings."
+        ],
+        [
+          "Primary Actor",
+          "Employer"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The employer is logged in.\u000b2. The employer has active job posts.\u000b3. Applications have been received for at least one job post."
+        ],
+        [
+          "Main Flow",
+          "1. The employer navigates to the Applications section.\u000b2. The system retrieves and displays a list of applications grouped by job post.\u000b3. The employer selects an application to view details.\u000b4. The system displays applicant info, resume summary, and applied date.\u000b5. The employer optionally views View Skill Match Scoring (<<extend>>).\u000b6. The employer optionally uses Download Candidate Resumes (<<extend>>).\u000b7. The employer updates the application status (New → Shortlisted / Rejected / Interview Scheduled / Hired).\u000b8. The system saves the status update and notifies the job seeker."
+        ],
+        [
+          "Post Conditions",
+          "1. The application status is successfully updated.\u000b2. The job seeker receives a notification of the status change.\u000b3. The employer's application statistics are updated."
+        ],
+        [
+          "Alternative Flows",
+          "1. No applications received → system shows an empty state.\u000b2. Job seeker withdraws application → application is marked as withdrawn.\u000b3. Resume file missing → download option is disabled."
+        ]
+      ]
+    ]
+  },
+  {
+    "slide": 32,
+    "tables": [
+      [
+        [
+          "ID",
+          "UC-15"
+        ],
+        [
+          "Brief Description",
+          "Allows an employer to download the PDF resume attached to a candidate's job application."
+        ],
+        [
+          "Primary Actor",
+          "Employer"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The employer is logged in.\u000b2. The employer is viewing an application with an uploaded resume."
+        ],
+        [
+          "Main Flow",
+          "1. The employer clicks the Download Resume button on the application details page.\u000b2. The system retrieves the resume file from storage.\u000b3. The system initiates the file download to the employer's device.\u000b4. The system logs the download action for audit purposes."
+        ],
+        [
+          "Post Conditions",
+          "1. The resume PDF is successfully downloaded.\u000b2. The download is recorded in the system audit log."
+        ],
+        [
+          "Alternative Flows",
+          "1. Resume file is missing or corrupted → system shows an error.\u000b2. Storage service is unavailable → system shows a retry option."
+        ]
+      ],
+      [
+        [
+          "ID",
+          "UC-16"
+        ],
+        [
+          "Brief Description",
+          "Allows an employer to create and update their company profile information and upload a corporate logo."
+        ],
+        [
+          "Primary Actor",
+          "Employer"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The employer is logged into the system.\u000b2. The employer has navigated to the company profile settings."
+        ],
+        [
+          "Main Flow",
+          "1. The employer clicks Edit Company Profile.\u000b2. The system displays the current corporate profile form (company name, description, industry, size, website, location, contact info).\u000b3. The employer updates the fields as needed.\u000b4. The employer uploads or replaces the company logo.\u000b5. The employer clicks Save Changes.\u000b6. The system validates the inputs and file.\u000b7. The system updates the corporate profile and logo in the database and file storage.\u000b8. The system displays a success confirmation."
+        ],
+        [
+          "Post Conditions",
+          "1. The corporate profile and logo are successfully updated.\u000b2. The updated profile and logo are visible on all the employer's job postings."
+        ],
+        [
+          "Alternative Flows",
+          "1. Invalid logo format/size → system rejects and specifies requirements.\u000b2. Duplicate company name detected → system warns the user.\u000b3. Mandatory fields left empty → system highlights errors."
+        ]
+      ]
+    ]
+  },
+  {
+    "slide": 33,
+    "tables": [
+      [
+        [
+          "ID",
+          "UC-17"
+        ],
+        [
+          "Brief Description",
+          "Allows the platform administrator to view system-wide analytics including user growth, job postings, application trends, and platform health metrics."
+        ],
+        [
+          "Primary Actor",
+          "Platform Admin"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The admin is logged in with administrative privileges.\u000b2. The system analytics module is operational."
+        ],
+        [
+          "Main Flow",
+          "1. The admin navigates to Global Analytics Dashboard.\u000b2. The system aggregates data from all modules (users, jobs, applications, logs).\u000b3. The system displays visual analytics (charts, graphs, KPIs): total users, active jobs, applications this month, top industries, platform uptime, etc.\u000b4. The admin selects date ranges or filters to drill down into specific metrics.\u000b5. The system updates the displayed analytics dynamically."
+        ],
+        [
+          "Post Conditions",
+          "1. The global analytics dashboard is successfully displayed.\u000b2. The admin can export reports or navigate to specific management sections."
+        ],
+        [
+          "Alternative Flows",
+          "1. Analytics data is stale → system shows last updated timestamp.\u000b2. Aggregation service is down → system shows cached data with a warning."
+        ]
+      ],
+      [
+        [
+          "ID",
+          "UC-18"
+        ],
+        [
+          "Brief Description",
+          "Allows the platform administrator to review, approve, reject, or request changes for job postings submitted by employers to ensure quality and compliance."
+        ],
+        [
+          "Primary Actor",
+          "Platform Admin"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The admin is logged in with administrative privileges.\u000b2. There are job posts pending moderation."
+        ],
+        [
+          "Main Flow",
+          "1. The admin navigates to the Moderation Queue.\u000b2. The system displays a list of pending job posts.\u000b3. The admin selects a job post to review.\u000b4. The system displays the full job post details.\u000b5. The admin reviews the content for compliance with platform policies.\u000b6. The admin selects an action: Approve, Reject, or Request Changes.\u000b7. The system updates the job post status accordingly.\u000b8. The system notifies the employer of the moderation outcome.\u000b9. If approved, the job becomes visible to job seekers."
+        ],
+        [
+          "Post Conditions",
+          "1. The job post status is updated (Approved / Rejected / Changes Requested).\u000b2. The employer is notified.\u000b3. The moderation action is logged in the audit trail."
+        ],
+        [
+          "Alternative Flows",
+          "1. Job post is flagged as suspicious → admin can escalate or ban the employer.\u000b2. Employer is repeat offender → admin can restrict posting privileges."
+        ]
+      ]
+    ]
+  },
+  {
+    "slide": 34,
+    "tables": [
+      [
+        [
+          "ID",
+          "UC-19"
+        ],
+        [
+          "Brief Description",
+          "Allows the platform administrator to manage user accounts by locking, unlocking, or permanently deleting them."
+        ],
+        [
+          "Primary Actor",
+          "Platform Admin"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The admin is logged in with administrative privileges.\u000b2. The target user account exists in the system."
+        ],
+        [
+          "Main Flow",
+          "1. The admin navigates to User Management.\u000b2. The system displays a searchable list of all user accounts.\u000b3. The admin searches for and selects a specific user.\u000b4. The system displays the user's account details and current status.\u000b5. The admin selects an action: Lock Account, Unlock Account, or Delete Account.\u000b6. The system prompts the admin for confirmation.\u000b7. Upon confirmation, the system executes the action.\u000b8. The system logs the action in the audit trail.\u000b9. If locked/deleted, the system notifies the user via email."
+        ],
+        [
+          "Post Conditions",
+          "1. The user account status is updated or the account is removed.\u000b2. The action is recorded in the system audit logs.\u000b3. The affected user is notified (if applicable)."
+        ],
+        [
+          "Alternative Flows",
+          "1. Admin attempts to delete own account → system prevents it.\u000b2. User has active applications/jobs → system warns before deletion.\u000b3. User is already in the requested state → system shows a message."
+        ]
+      ],
+      [
+        [
+          "ID",
+          "UC-20"
+        ],
+        [
+          "Brief Description",
+          "Allows the platform administrator to view a comprehensive log of all significant system actions performed by users and admins for security and compliance."
+        ],
+        [
+          "Primary Actor",
+          "Platform Admin"
+        ],
+        [
+          "Secondary Actor",
+          "None"
+        ],
+        [
+          "Preconditions",
+          "1. The admin is logged in with administrative privileges.\u000b2. The audit logging service is operational."
+        ],
+        [
+          "Main Flow",
+          "1. The admin navigates to System Audit Logs.\u000b2. The system retrieves log entries from the audit database.\u000b3. The system displays the logs in a table (timestamp, actor, action type, target entity, IP address, result).\u000b4. The admin applies filters (date range, user, action type).\u000b5. The system updates the displayed logs based on filters.\u000b6. The admin can export the filtered logs to a file."
+        ],
+        [
+          "Post Conditions",
+          "1. The audit logs are successfully displayed.\u000b2. The admin can review, filter, or export the logs for compliance review."
+        ],
+        [
+          "Alternative Flows",
+          "1. No logs match the filter → system shows 'No results found'.\u000b2. Log database is large → system paginates results.\u000b3. Export fails → system shows error and retry option."
+        ]
+      ]
+    ]
+  }
+]

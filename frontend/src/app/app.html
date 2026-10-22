@@ -1,0 +1,15 @@
+﻿<div class="min-h-screen font-sans selection:bg-brand-accent/30 text-text-main">
+  <div class="atmosphere" aria-hidden="true"></div>
+
+  <app-nav />
+
+  <main [class.page-enter]="animateMain()">
+    <router-outlet />
+  </main>
+
+  @if (isHome()) {
+    <app-footer />
+  }
+
+  <app-toast />
+</div>

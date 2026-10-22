@@ -1,0 +1,459 @@
+[
+  {
+    "slide": 1,
+    "texts": [
+      "JOB PORTAL\u000bMANAGEMENT SYSTEM",
+      "DARSANA R (24102817)",
+      "DIYA LAL N (24102299)\u000bGOPIKA K (24102623)",
+      "K S MOHAMMED SHAHAL (24102259)",
+      "1"
+    ]
+  },
+  {
+    "slide": 2,
+    "texts": [
+      "INTRODUCTION"
+    ]
+  },
+  {
+    "slide": 3,
+    "texts": [
+      "Introduction",
+      "• Centralized web-based platform connecting job seekers and recruiters.",
+      "• Job seekers can create profiles, upload resumes, search jobs and apply online.",
+      "• Recruiters can publish vacancies, review applications and manage recruitment.",
+      "• Centralized records improve organization, accessibility and recruitment efficiency.",
+      "2"
+    ]
+  },
+  {
+    "slide": 4,
+    "texts": [
+      "Aim",
+      "Primary Aim",
+      "To provide a centralized web-based job portal that simplifies job searching and streamlines recruitment activities.",
+      "Expected Outcome",
+      "Enable candidates and recruiters to interact through an organized, accessible and secure recruitment platform.",
+      "3"
+    ]
+  },
+  {
+    "slide": 5,
+    "texts": [
+      "Objective",
+      "• Enable job seekers to maintain profiles and resumes and search for suitable jobs.",
+      "• Allow online job applications and application-status tracking.",
+      "• Allow recruiters to create, update and manage job vacancies and applications.",
+      "• Provide administrators with user, recruiter and platform management controls.",
+      "4"
+    ]
+  },
+  {
+    "slide": 6,
+    "texts": [
+      "Scope",
+      "• Job discovery: search and filter opportunities using location, salary, experience and job type.",
+      "• Recruitment management: job posting, applicant review, shortlisting and decisions.",
+      "• Administration: user management, recruiter approval and monitoring.",
+      "• Centralized data management for profiles, jobs, applications and administrative records.",
+      "5"
+    ]
+  },
+  {
+    "slide": 7,
+    "texts": [
+      "FUNCTIONAL REQUIREMENTS"
+    ]
+  },
+  {
+    "slide": 8,
+    "texts": [
+      "R.1 LOGIN",
+      "R.1.1 Job Seeker Login",
+      "Description: The system shall authenticate registered job seekers using valid credentials and grant access to their dashboard.",
+      "Input: Email , Password",
+      "Output: Redirected to Job Seeker Dashboard",
+      "R.1.2 Recruiter Login",
+      "Description: The system shall authenticate registered recruiters and allow access to the recruiter dashboard after successful login.",
+      "Input: Recruiter Email/Username, Password",
+      "Output: Redirected to Recruiter Dashboard",
+      "Functional Requirements"
+    ]
+  },
+  {
+    "slide": 9,
+    "texts": [
+      "Functional Requirements",
+      "6",
+      "R.1.3 Admin Login",
+      "Description: The system shall allow the administrator to log in securely using admin credentials to manage users, recruiters, and job postings.",
+      "Input: Admin Username, Password.",
+      "Output: Redirected to Admin Dashboard.",
+      "R.2 USER REGISTRATION",
+      "Description: The system shall allow new users (job seekers and recruiters) to create an account",
+      "in order to access the job portal services.",
+      "Input: Name, Email, Password.",
+      "Output: “Registered Successfully”."
+    ]
+  },
+  {
+    "slide": 10,
+    "texts": [
+      "Functional Requirements",
+      "R.3 JOB SEEKER PROFILE CREATION",
+      "Description: The system shall allow job seekers to create and update their professional profile by entering educational qualifications, skills, and uploading their resume.",
+      "Input: Qualification, Skills, Resume",
+      "Output: Profile Created Successfully",
+      "R.4 SEARCH JOBS",
+      "Description: The system shall allow job seekers to search for jobs using filters such as location,",
+      "salary range, experience level, and job type.",
+      "Input: Location, Salary, Experience, Job Type",
+      "Output: List of Available Jobs"
+    ]
+  },
+  {
+    "slide": 11,
+    "texts": [
+      "Functional Requirements",
+      "R.5 VIEW JOB DETAILS",
+      "Description: The system shall allow users to view complete job information including job description, company details, required skills, salary, and application deadline.",
+      "Input: Select Job",
+      "Output: Detailed Job Information Displayed",
+      "R.6 APPLY FOR JOBS",
+      "Description: The system shall allow job seekers to apply for a selected job by submitting their resume and required details.",
+      "Input: Click Apply, Upload Resume",
+      "Output: “Application Submitted Successfully”."
+    ]
+  },
+  {
+    "slide": 12,
+    "texts": [
+      "Functional Requirements",
+      "R.7 POST JOB",
+      "Description: The system shall allow recruiters to create and publish job postings by entering job",
+      "details such as title, skills, salary, experience, and location.",
+      "Input: Job Title, Skills, Salary, Experience, Location",
+      "Output: “Job Posted Successfully”",
+      "R.7 UPDATE/DELETE JOB",
+      "Description: The system shall allow recruiters to modify or remove previously posted job listings.",
+      "Input: Select Job",
+      "Output: Job Updated or Deleted Successfully"
+    ]
+  },
+  {
+    "slide": 13,
+    "texts": [
+      "Functional Requirements",
+      "R.8 VIEW APPLICATIONS",
+      "Description: The system shall allow recruiters to view the list of candidates who have applied",
+      "for a particular job posting.",
+      "Input: Click “View Applications”",
+      "Output: List of Applicants Displayed",
+      "R.9 ACCEPT/REJECT CANDIDATE",
+      "Description: The system shall allow recruiters to review applications and accept or reject",
+      "candidates. The system shall notify the candidate about the decision.",
+      "Input: Recruiter Selection (Accept/Reject)",
+      "Output: Candidate Notified"
+    ]
+  },
+  {
+    "slide": 14,
+    "texts": [
+      "Functional Requirements",
+      "R.10 RECRUITER APPROVAL",
+      "Description: The system shall allow the admin to review newly registered recruiters and approve",
+      "or reject their registration before granting full access to job posting features.",
+      "Input: Recruiter Registration Request",
+      "Output: Recruiter Approved or Rejected",
+      "R.11 MANAGE USERS",
+      "Description: The system shall allow the administrator to manage registered users to maintain system security",
+      "and data integrity. The admin can monitor user activities, delete fake or inactive accounts, block",
+      "users who violate policies, and maintain the overall user database.",
+      "Input: Admin selects user account",
+      "Output: User deleted, blocked, or database updated successfully"
+    ]
+  },
+  {
+    "slide": 15,
+    "texts": [
+      "NON FUNCTIONAL REQUIREMENTS"
+    ]
+  },
+  {
+    "slide": 16,
+    "texts": [
+      "Non Functional Requirements",
+      "1. PERFORMANCE",
+      "The system must be fast and responsive, even when handling large user data. System should load pages quickly and support many users simultaneously",
+      "2. COMPATIBILITY",
+      "System works on:",
+      "Mobile",
+      "Tablet",
+      "Laptop",
+      "All browsers (Chrome, Edge, Firefox)"
+    ]
+  },
+  {
+    "slide": 17,
+    "texts": [
+      "Non Functional Requirements",
+      "3. SECURITY",
+      "Security ensures that the data stored in the Job Portal Management System is protected from unauthorized access and misuse. The system must safeguard sensitive information such as user credentials, personal details, and job application data. Proper authentication and authorization mechanisms should be implemented to ensure that only valid users can access the system.",
+      "4.USABILITY",
+      "System should provide a simple, clear, and user-friendly interface so that both job seekers and recruiters can use the system without difficulty. The system should include clear navigation, understandable instructions, and well-organized features that allow users to quickly perform tasks such as job searching, job posting, and application submission."
+    ]
+  },
+  {
+    "slide": 18,
+    "texts": [
+      "MODULES AND WORKING"
+    ]
+  },
+  {
+    "slide": 19,
+    "texts": [
+      "Modules",
+      "7",
+      "1.JOB SEEKER MODULE",
+      "This module provides functionalities for job seekers to create and manage profiles containing personal, educational, and professional details.",
+      "Users can search and filter job listings based on skills, location, and job title . Applications can be submitted only after uploading the resume.",
+      "The module also enables applicants to save preferred jobs for future reference, and track the status of their applications, such as applied, shortlisted, selected, or rejected.",
+      "Resume management and application history are maintained through relational tables."
+    ]
+  },
+  {
+    "slide": 20,
+    "texts": [
+      "Modules",
+      "7",
+      "2.EMPLOYER",
+      "The Employer Module is designed to help recruiters efficiently manage the recruitment process.",
+      "The Employer module enables recruiters to register organizations, post and manage job vacancies, and review applicant profiles.",
+      "New job vacancies can be posted with information such as job title, qualifications, salary, experience requirements, and job description.",
+      "Employers can shortlist candidates, update application statuses, and communicate decisions.",
+      "The module also allows recruiters to edit, update, or delete job postings whenever necessary.",
+      "Database relationships ensure consistency between job postings, employers, and applicants."
+    ]
+  },
+  {
+    "slide": 21,
+    "texts": [
+      "Modules",
+      "7",
+      "3.ADMIN",
+      "The Admin Module is responsible for controlling and managing the overall functionality of the job portal system.",
+      "This module allows administrators to securely log in and monitor the activities of both job seekers and employers",
+      "Administrators can manage user accounts, verify and approve job postings, remove fake or inappropriate job listings, and ensure that the platform operates smoothly and securely."
+    ]
+  },
+  {
+    "slide": 22,
+    "texts": [
+      "System Design –",
+      "Use Case Diagram"
+    ]
+  },
+  {
+    "slide": 23,
+    "texts": [
+      "System Design – Use Case Diagram",
+      "8"
+    ]
+  },
+  {
+    "slide": 24,
+    "texts": [
+      "Use Case Specification"
+    ]
+  },
+  {
+    "slide": 25,
+    "texts": [
+      "8. Use Case Specification",
+      "UC-01: Register & Login",
+      ".",
+      "UC-02: Verify Credentials",
+      "25"
+    ]
+  },
+  {
+    "slide": 26,
+    "texts": [
+      "26",
+      "Use Case: View Seeker Dashboard Status",
+      "Use Case: Browse & Filter Open Jobs"
+    ]
+  },
+  {
+    "slide": 27,
+    "texts": [
+      ".",
+      "27",
+      "Use Case: View Job Details",
+      "Use Case: Upload & Manage PDF Resume"
+    ]
+  },
+  {
+    "slide": 28,
+    "texts": [
+      "27",
+      "Use Case: Apply to Job / Withdraw Application",
+      "Use Case: View Skill Match Scoring (<<extend>>)"
+    ]
+  },
+  {
+    "slide": 29,
+    "texts": [
+      "28",
+      "Use Case: Bookmark / Save Jobs",
+      "Use Case: Update Profile & Photo"
+    ]
+  },
+  {
+    "slide": 30,
+    "texts": [
+      "29",
+      "Use Case: Update Profile & Photo",
+      "Use Case: Create, Update & Delete Job Posts"
+    ]
+  },
+  {
+    "slide": 31,
+    "texts": [
+      "Use Case: Toggle Job Status (Open / Closed)",
+      "Use Case: Manage Applications"
+    ]
+  },
+  {
+    "slide": 32,
+    "texts": [
+      "Use Case: Download Candidate Resumes (<<extend>>)",
+      "Use Case: Manage Corporate Profile & Logo"
+    ]
+  },
+  {
+    "slide": 33,
+    "texts": [
+      "Use Case: View Global Analytics Dashboard",
+      "Use Case: Moderate & Verify Job Posts"
+    ]
+  },
+  {
+    "slide": 34,
+    "texts": [
+      "Use Case: Manage Users (Lock / Unlock / Delete)",
+      "Use Case: View System Audit Logs"
+    ]
+  },
+  {
+    "slide": 35,
+    "texts": [
+      "Class Diagram"
+    ]
+  },
+  {
+    "slide": 36,
+    "texts": [
+      "9. Class Diagram",
+      "10"
+    ]
+  },
+  {
+    "slide": 37,
+    "texts": [
+      "Sequence Diagram – Apply for Job"
+    ]
+  },
+  {
+    "slide": 38,
+    "texts": [
+      "10. Sequence Diagram",
+      "11"
+    ]
+  },
+  {
+    "slide": 39,
+    "texts": [
+      "Activity Diagram – Job Application"
+    ]
+  },
+  {
+    "slide": 40,
+    "texts": [
+      "11. Activity Diagram",
+      "12"
+    ]
+  },
+  {
+    "slide": 41,
+    "texts": [
+      "System Architecture & Tools"
+    ]
+  },
+  {
+    "slide": 42,
+    "texts": [
+      "12. System Architecture & Tools",
+      "Frontend",
+      "React\u000bHTML\u000bCSS\u000bTailwind CSS\u000bAxios\u000b\u000bResponsive interface for users and recruiters.",
+      "Backend",
+      "Node.js\u000bExpress.js\u000bJWT\u000b\u000bHandles APIs, routing, authentication, authorization and server-side logic.",
+      "Database",
+      "MariaDB\u000b\u000bStores users, job seekers, employers, jobs, skills, applications, saved jobs and admin logs.",
+      "13"
+    ]
+  },
+  {
+    "slide": 43,
+    "texts": [
+      "Future Scope"
+    ]
+  },
+  {
+    "slide": 44,
+    "texts": [
+      "13. Future Scope",
+      "• AI-based job recommendations and automated resume parsing.",
+      "• Advanced search filters, analytics dashboards and online skill assessments.",
+      "• Android and iOS mobile applications.",
+      "• Real-time chat, email/push notifications and multilingual support.",
+      "• Freelance/remote opportunities and online video interview systems.",
+      "14"
+    ]
+  },
+  {
+    "slide": 45,
+    "texts": [
+      "Conclusion"
+    ]
+  },
+  {
+    "slide": 46,
+    "texts": [
+      "14. Conclusion",
+      "• The Job Portal Management System provides a centralized platform for job seekers and recruiters.",
+      "• It supports job search, applications, job posting and recruitment management.",
+      "• Centralized storage improves organization, accessibility and security of recruitment data.",
+      "• The web-based system reduces manual work and helps make recruitment more structured and efficient.",
+      "15"
+    ]
+  },
+  {
+    "slide": 47,
+    "texts": [
+      "References"
+    ]
+  },
+  {
+    "slide": 48,
+    "texts": [
+      "15. References",
+      "• W3Schools – HTML reference: https://www.w3schools.com/html/",
+      "• MDN Web Docs – HTML: https://developer.mozilla.org/en-US/docs/Web/HTML",
+      "• MDN Web Docs – CSS: https://developer.mozilla.org/en-US/docs/Web/CSS",
+      "• MDN Web Docs – JavaScript: https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+      "• MariaDB Server Documentation: https://mariadb.com/kb/en/documentation/",
+      "16"
+    ]
+  }
+]

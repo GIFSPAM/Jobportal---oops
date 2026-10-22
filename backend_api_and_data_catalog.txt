@@ -1,0 +1,880 @@
+!!! STALE — CONTRADICTS THE SHIPPED SCHEMA AND API. DO NOT BUILD AGAINST THIS FILE. !!!
+Written 2026-09-26 against a schema this project does not have. Verified against
+the implementation on 2026-09-27:
+
+  this catalog claims                       actually shipped
+  ----------------------------------------  --------------------------------------
+  11 tables / entities                      10 tables (docker/mariadb-init/01-schema.sql)
+  users.status ENUM('active','suspended')   users.is_active BOOLEAN
+  first_name / last_name on JobSeekers      full_name VARCHAR(100)
+  register/profile payloads carrying        neither string occurs anywhere in
+    first_name, last_name                   backend/src — they would be rejected
+
+Authoritative sources are `docker/mariadb-init/01-schema.sql`,
+`backend/src/database/entities/`, and `backend/scripts/smoke-test.mjs`, which
+pins the live contract with 86 assertions. This file is kept for reference only.
+
+================================================================================
+          JOBYTES - NESTJS BACKEND API & DATA DICTIONARY CATALOG
+================================================================================
+Generated: 2026-09-26
+Architecture: NestJS, TypeORM, MariaDB / MySQL2, JWT Bearer Security
+Prefix: /api
+
+================================================================================
+1. DATABASE SCHEMA & ENTITY DICTIONARY (11 TABLES / ENTITIES)
+================================================================================
+
+--------------------------------------------------------------------------------
+1.1 `users` Table (Entity: User)
+--------------------------------------------------------------------------------
+Description: Central authentication and identity records for all system roles.
+Columns:
+  - user_id       INTEGER PRIMARY KEY AUTO_INCREMENT
+  - email         VARCHAR(255) UNIQUE NOT NULL
+  - password_hash VARCHAR(255) NOT NULL (Bcrypt hashed)
+  - role          ENUM('jobseeker', 'employer', 'admin') NOT NULL DEFAULT 'jobseeker'
+  - status        ENUM('active', 'suspended') NOT NULL DEFAULT 'active'
+  - created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  - updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+Relationships:
+  - OneToOne -> JobSeeker (foreign key: user_id)
+  - OneToOne -> Employer (foreign key: user_id)
+  - OneToMany -> AdminLog (foreign key: admin_id)
+
+--------------------------------------------------------------------------------
+1.2 `job_seekers` Table (Entity: JobSeeker)
+--------------------------------------------------------------------------------
+Description: Candidate profiles, personal details, professional bio & resume.
+Columns:
+  - seeker_id   INTEGER PRIMARY KEY AUTO_INCREMENT
+  - user_id     INTEGER UNIQUE NOT NULL (FK -> users.user_id)
+  - first_name  VARCHAR(100) NOT NULL
+  - last_name   VARCHAR(100) NOT NULL
+  - title       VARCHAR(150) NULL (e.g. "Senior Fullstack Engineer")
+  - phone       VARCHAR(50) NULL
+  - location    VARCHAR(150) NULL (e.g. "Austin, TX")
+  - bio         TEXT NULL
+  - resume_url  VARCHAR(255) NULL (Local file path e.g. "/uploads/resumes/...")
+  - created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  - updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+Relationships:
+  - OneToOne -> User (foreign key: user_id)
+  - OneToMany -> Application (foreign key: seeker_id)
+  - OneToMany -> SeekerSkill (foreign key: seeker_id)
+  - OneToMany -> SavedJob (foreign key: seeker_id)
+
+--------------------------------------------------------------------------------
+1.3 `employers` Table (Entity: Employer)
+--------------------------------------------------------------------------------
+Description: Hiring company organization profiles, size, industry & branding.
+Columns:
+  - employer_id   INTEGER PRIMARY KEY AUTO_INCREMENT
+  - user_id       INTEGER UNIQUE NOT NULL (FK -> users.user_id)
+  - company_name  VARCHAR(200) NOT NULL
+  - industry      VARCHAR(100) NULL (e.g. "Cloud Computing")
+  - company_size  VARCHAR(50) NULL (e.g. "51-200")
+  - website       VARCHAR(255) NULL (e.g. "https://company.com")
+  - location      VARCHAR(150) NULL (e.g. "San Francisco, CA")
+  - description   TEXT NULL
+  - logo_url      VARCHAR(255) NULL (Local file path e.g. "/uploads/logos/...")
+  - created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  - updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+Relationships:
+  - OneToOne -> User (foreign key: user_id)
+  - OneToMany -> Job (foreign key: employer_id)
+
+--------------------------------------------------------------------------------
+1.4 `jobs` Table (Entity: Job)
+--------------------------------------------------------------------------------
+Description: Job postings published by employers with salary ranges & status.
+Columns:
+  - job_id       INTEGER PRIMARY KEY AUTO_INCREMENT
+  - employer_id  INTEGER NOT NULL (FK -> employers.employer_id)
+  - title        VARCHAR(200) NOT NULL
+  - description  TEXT NOT NULL
+  - location     VARCHAR(150) NOT NULL
+  - job_type     ENUM('Full-time', 'Part-time', 'Contract', 'Remote', 'Internship') DEFAULT 'Full-time'
+  - salary_min   DECIMAL(10,2) NULL
+  - salary_max   DECIMAL(10,2) NULL
+  - status       ENUM('open', 'closed') NOT NULL DEFAULT 'open'
+  - is_verified  BOOLEAN NOT NULL DEFAULT FALSE
+  - created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  - updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+Relationships:
+  - ManyToOne -> Employer (foreign key: employer_id)
+  - OneToMany -> Application (foreign key: job_id)
+  - OneToMany -> JobSkill (foreign key: job_id)
+  - OneToMany -> SavedJob (foreign key: job_id)
+
+--------------------------------------------------------------------------------
+1.5 `applications` Table (Entity: Application)
+--------------------------------------------------------------------------------
+Description: Candidate job submissions, status pipeline & cover letters.
+Columns:
+  - application_id INTEGER PRIMARY KEY AUTO_INCREMENT
+  - job_id         INTEGER NOT NULL (FK -> jobs.job_id)
+  - seeker_id      INTEGER NOT NULL (FK -> job_seekers.seeker_id)
+  - status         ENUM('applied', 'shortlisted', 'rejected', 'hired') DEFAULT 'applied'
+  - cover_note     TEXT NULL
+  - resume_url     VARCHAR(255) NULL (Snapshot of candidate resume at submission time)
+  - applied_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  - updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+Relationships:
+  - ManyToOne -> Job (foreign key: job_id)
+  - ManyToOne -> JobSeeker (foreign key: seeker_id)
+
+--------------------------------------------------------------------------------
+1.6 `skills` Table (Entity: Skill)
+--------------------------------------------------------------------------------
+Description: Standardized directory of tech and professional skills.
+Columns:
+  - skill_id    INTEGER PRIMARY KEY AUTO_INCREMENT
+  - name        VARCHAR(100) UNIQUE NOT NULL (e.g. "TypeScript", "NestJS")
+  - category    VARCHAR(100) NULL (e.g. "Backend", "Frontend", "DevOps")
+
+Relationships:
+  - OneToMany -> JobSkill (foreign key: skill_id)
+  - OneToMany -> SeekerSkill (foreign key: skill_id)
+
+--------------------------------------------------------------------------------
+1.7 `job_skills` Table (Entity: JobSkill)
+--------------------------------------------------------------------------------
+Description: Junction table connecting Job postings to required Skills.
+Columns:
+  - job_id   INTEGER NOT NULL (FK -> jobs.job_id)
+  - skill_id INTEGER NOT NULL (FK -> skills.skill_id)
+  PRIMARY KEY (job_id, skill_id)
+
+--------------------------------------------------------------------------------
+1.8 `seeker_skills` Table (Entity: SeekerSkill)
+--------------------------------------------------------------------------------
+Description: Junction table listing Candidate Skills with proficiency levels.
+Columns:
+  - seeker_id        INTEGER NOT NULL (FK -> job_seekers.seeker_id)
+  - skill_id         INTEGER NOT NULL (FK -> skills.skill_id)
+  - proficiency_level ENUM('Beginner', 'Intermediate', 'Advanced', 'Expert') DEFAULT 'Intermediate'
+  PRIMARY KEY (seeker_id, skill_id)
+
+--------------------------------------------------------------------------------
+1.9 `saved_jobs` Table (Entity: SavedJob)
+--------------------------------------------------------------------------------
+Description: Candidate bookmarked jobs list.
+Columns:
+  - seeker_id INTEGER NOT NULL (FK -> job_seekers.seeker_id)
+  - job_id    INTEGER NOT NULL (FK -> jobs.job_id)
+  - saved_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (seeker_id, job_id)
+
+--------------------------------------------------------------------------------
+1.10 `admin_logs` Table (Entity: AdminLog)
+--------------------------------------------------------------------------------
+Description: Security audit log recording administrative actions.
+Columns:
+  - log_id      INTEGER PRIMARY KEY AUTO_INCREMENT
+  - admin_id    INTEGER NOT NULL (FK -> users.user_id)
+  - action      VARCHAR(255) NOT NULL (e.g. "VERIFY_JOB", "SUSPEND_USER")
+  - target_type VARCHAR(50) NOT NULL (e.g. "JOB", "USER")
+  - target_id   INTEGER NOT NULL
+  - details     TEXT NULL
+  - created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+
+================================================================================
+2. EXHAUSTIVE API ENDPOINTS CATALOG (34 ENDPOINTS)
+================================================================================
+
+--------------------------------------------------------------------------------
+MODULE 1: AUTHENTICATION API (`/api/auth`)
+--------------------------------------------------------------------------------
+
+1. POST /api/auth/register
+   - Auth Required: Public (None)
+   - Description: Registers a new user account (JobSeeker or Employer) and creates corresponding profile entity.
+   - Request Body (JSON):
+       {
+         "email": "user@example.com",
+         "password": "SecurePassword123",
+         "role": "jobseeker" | "employer",
+         "first_name": "Jane",       // Required for jobseeker
+         "last_name": "Doe",         // Required for jobseeker
+         "company_name": "Acme Inc"  // Required for employer
+       }
+   - Response Output (201 Created):
+       {
+         "access_token": "eyJhbGciOi...",
+         "user": {
+           "user_id": 12,
+           "email": "user@example.com",
+           "role": "jobseeker",
+           "status": "active"
+         },
+         "profile": { ... }
+       }
+
+2. POST /api/auth/login
+   - Auth Required: Public (None)
+   - Description: Verifies credentials, checks active status, returns JWT Bearer token and user profile.
+   - Request Body (JSON):
+       {
+         "email": "user@example.com",
+         "password": "SecurePassword123"
+       }
+   - Response Output (200 OK):
+       {
+         "access_token": "eyJhbGciOi...",
+         "user": {
+           "user_id": 12,
+           "email": "user@example.com",
+           "role": "jobseeker",
+           "status": "active"
+         },
+         "profile": { ... }
+       }
+
+3. GET /api/auth/me
+   - Auth Required: Authenticated (JWT Header: `Authorization: Bearer <token>`)
+   - Description: Resolves current user token and fetches live profile details.
+   - Response Output (200 OK):
+       {
+         "user_id": 12,
+         "email": "user@example.com",
+         "role": "jobseeker",
+         "status": "active",
+         "profile": {
+           "seeker_id": 5,
+           "first_name": "Jane",
+           "last_name": "Doe",
+           "title": "Fullstack Developer",
+           "location": "Austin, TX",
+           "resume_url": "/uploads/resumes/resume-123.pdf"
+         }
+       }
+
+4. POST /api/auth/logout
+   - Auth Required: Authenticated (JWT)
+   - Description: Client-side session termination confirmation.
+   - Response Output (200 OK):
+       { "message": "Logged out successfully" }
+
+
+--------------------------------------------------------------------------------
+MODULE 2: PUBLIC & GUEST DISCOVERY API (`/api/public` & `/api/jobs`)
+--------------------------------------------------------------------------------
+
+5. GET /api/public/landing-jobs
+   - Auth Required: Public (None)
+   - Description: Returns top 6 verified open job postings for homepage featured section.
+   - Response Output (200 OK):
+       [
+         {
+           "job_id": 101,
+           "title": "Lead Fullstack Engineer",
+           "company_name": "Tech Corp",
+           "company_logo": "https://...",
+           "location": "Remote",
+           "job_type": "Full-time",
+           "salary_min": 120000,
+           "salary_max": 160000,
+           "is_verified": true,
+           "skills": ["TypeScript", "NestJS", "Angular"]
+         }
+       ]
+
+6. GET /api/public/skills
+   - Auth Required: Public (None)
+   - Description: Returns all skills and demand counts for skill cloud tags.
+   - Response Output (200 OK):
+       [
+         { "skill_id": 1, "name": "TypeScript", "category": "Backend", "job_count": 14 },
+         { "skill_id": 2, "name": "Angular", "category": "Frontend", "job_count": 9 }
+       ]
+
+7. GET /api/public/employers
+   - Auth Required: Public (None)
+   - Description: Returns directory of verified hiring companies.
+   - Response Output (200 OK):
+       [
+         {
+           "employer_id": 3,
+           "company_name": "Tech Corp",
+           "industry": "Software",
+           "company_size": "100-500",
+           "location": "San Francisco, CA",
+           "logo_url": "/uploads/logos/logo-techcorp.png",
+           "open_jobs_count": 4
+         }
+       ]
+
+8. GET /api/jobs
+   - Auth Required: Public / Optional JWT
+   - Description: Search and filter job postings catalogue with keyword search, pagination, and multi-filter.
+   - Query Parameters:
+       `search`: Filter title/company/description keyword (string)
+       `location`: Filter location string
+       `job_type`: 'Full-time' | 'Part-time' | 'Contract' | 'Remote' | 'Internship'
+       `skill`: Skill name string
+       `min_salary`: Minimum salary floor (number)
+       `sort`: 'recent' | 'salary'
+   - Response Output (200 OK):
+       [
+         {
+           "job_id": 101,
+           "title": "Lead Fullstack Engineer",
+           "employer_id": 3,
+           "company_name": "Tech Corp",
+           "logo_url": "/uploads/logos/logo-techcorp.png",
+           "location": "Remote",
+           "job_type": "Full-time",
+           "salary_min": 120000,
+           "salary_max": 160000,
+           "is_verified": true,
+           "created_at": "2026-09-20T10:00:00.000Z",
+           "skills": ["TypeScript", "NestJS", "Angular"]
+         }
+       ]
+
+9. GET /api/jobs/:id
+   - Auth Required: Public / Optional JWT
+   - Description: Retrieves comprehensive details for a single job posting along with employer profile.
+   - Path Parameter: `id` (INTEGER)
+   - Response Output (200 OK):
+       {
+         "job_id": 101,
+         "title": "Lead Fullstack Engineer",
+         "description": "We are seeking a lead engineer...",
+         "location": "Remote",
+         "job_type": "Full-time",
+         "salary_min": 120000,
+         "salary_max": 160000,
+         "status": "open",
+         "is_verified": true,
+         "created_at": "2026-09-20T10:00:00.000Z",
+         "employer": {
+           "employer_id": 3,
+           "company_name": "Tech Corp",
+           "industry": "Software",
+           "company_size": "100-500",
+           "website": "https://techcorp.com",
+           "logo_url": "/uploads/logos/logo-techcorp.png"
+         },
+         "skills": [
+           { "skill_id": 1, "name": "TypeScript" },
+           { "skill_id": 2, "name": "NestJS" }
+         ],
+         "is_saved": false,      // Evaluated if candidate JWT is present
+         "has_applied": false    // Evaluated if candidate JWT is present
+       }
+
+10. GET /api/jobs/company/:employer_id
+    - Auth Required: Public (None)
+    - Description: Retrieves all active job postings published by a specific company.
+    - Path Parameter: `employer_id` (INTEGER)
+    - Response Output (200 OK):
+        [ { "job_id": 101, "title": "Lead Fullstack Engineer", ... } ]
+
+
+--------------------------------------------------------------------------------
+MODULE 3: JOB SEEKER PORTAL API (`/api/seeker`)
+--------------------------------------------------------------------------------
+
+11. GET /api/seeker/profile
+    - Auth Required: JWT Role: `jobseeker`
+    - Description: Retrieves logged-in candidate profile, bio, title, location, and skills.
+    - Response Output (200 OK):
+        {
+          "seeker_id": 5,
+          "user_id": 12,
+          "first_name": "Jane",
+          "last_name": "Doe",
+          "email": "jane@example.com",
+          "title": "Fullstack Engineer",
+          "phone": "+1-555-0192",
+          "location": "Austin, TX",
+          "bio": "Experienced engineer with 5 years in Node.js and Angular.",
+          "resume_url": "/uploads/resumes/resume-5-17123456.pdf",
+          "skills": [
+            { "skill_id": 1, "name": "TypeScript", "proficiency_level": "Expert" }
+          ]
+        }
+
+12. PUT /api/seeker/profile
+    - Auth Required: JWT Role: `jobseeker`
+    - Description: Updates candidate personal information, title, phone, location, bio.
+    - Request Body (JSON):
+        {
+          "first_name": "Jane",
+          "last_name": "Doe",
+          "title": "Senior Staff Engineer",
+          "phone": "+1-555-0199",
+          "location": "Austin, TX",
+          "bio": "Updated professional bio..."
+        }
+    - Response Output (200 OK):
+        { "message": "Profile updated successfully", "profile": { ... } }
+
+13. POST /api/seeker/resume
+    - Auth Required: JWT Role: `jobseeker`
+    - Content-Type: `multipart/form-data`
+    - Description: Uploads candidate resume file (PDF, DOC, DOCX up to 5MB).
+    - Form Payload: `resume` (File)
+    - Response Output (200 OK):
+        {
+          "message": "Resume uploaded successfully",
+          "resume_url": "/uploads/resumes/resume-5-1727345600.pdf"
+        }
+
+14. GET /api/seeker/skills
+    - Auth Required: JWT Role: `jobseeker`
+    - Description: Lists skills associated with candidate profile.
+    - Response Output (200 OK):
+        [ { "skill_id": 1, "name": "TypeScript", "proficiency_level": "Expert" } ]
+
+15. POST /api/seeker/skills
+    - Auth Required: JWT Role: `jobseeker`
+    - Description: Adds a new skill or updates proficiency level.
+    - Request Body (JSON):
+        {
+          "skill_name": "NestJS",
+          "proficiency_level": "Advanced" // 'Beginner'|'Intermediate'|'Advanced'|'Expert'
+        }
+    - Response Output (201 Created):
+        { "message": "Skill added successfully", "skill": { ... } }
+
+16. DELETE /api/seeker/skills/:skill_id
+    - Auth Required: JWT Role: `jobseeker`
+    - Path Parameter: `skill_id` (INTEGER)
+    - Description: Removes a skill from candidate profile.
+    - Response Output (200 OK):
+        { "message": "Skill removed successfully" }
+
+17. GET /api/seeker/stats
+    - Auth Required: JWT Role: `jobseeker`
+    - Description: Aggregates candidate statistics (Total Applications, Shortlisted Count, Saved Jobs Count).
+    - Response Output (200 OK):
+        {
+          "total_applications": 8,
+          "shortlisted_count": 3,
+          "rejected_count": 1,
+          "saved_jobs_count": 12
+        }
+
+18. GET /api/seeker/applications
+    - Auth Required: JWT Role: `jobseeker`
+    - Description: Lists all job applications submitted by candidate with live status tracking.
+    - Response Output (200 OK):
+        [
+          {
+            "application_id": 42,
+            "job_id": 101,
+            "job_title": "Lead Fullstack Engineer",
+            "company_name": "Tech Corp",
+            "company_logo": "/uploads/logos/logo-techcorp.png",
+            "status": "shortlisted",
+            "applied_at": "2026-09-22T14:30:00.000Z",
+            "cover_note": "Here is my application..."
+          }
+        ]
+
+19. POST /api/seeker/applications
+    - Auth Required: JWT Role: `jobseeker`
+    - Description: Submits application for an open job posting with optional cover note.
+    - Request Body (JSON):
+        {
+          "job_id": 101,
+          "cover_note": "Dear Hiring Manager, I am thrilled to apply..."
+        }
+    - Response Output (201 Created):
+        {
+          "message": "Application submitted successfully",
+          "application_id": 42,
+          "status": "applied"
+        }
+
+20. GET /api/seeker/saved-jobs
+    - Auth Required: JWT Role: `jobseeker`
+    - Description: Lists bookmarked jobs for candidate.
+    - Response Output (200 OK):
+        [
+          {
+            "job_id": 101,
+            "title": "Lead Fullstack Engineer",
+            "company_name": "Tech Corp",
+            "location": "Remote",
+            "salary_min": 120000,
+            "salary_max": 160000,
+            "saved_at": "2026-09-25T09:00:00.000Z"
+          }
+        ]
+
+21. POST /api/seeker/saved-jobs
+    - Auth Required: JWT Role: `jobseeker`
+    - Description: Bookmarks a job posting.
+    - Request Body (JSON): { "job_id": 101 }
+    - Response Output (201 Created):
+        { "message": "Job saved successfully" }
+
+22. DELETE /api/seeker/saved-jobs/:job_id
+    - Auth Required: JWT Role: `jobseeker`
+    - Path Parameter: `job_id` (INTEGER)
+    - Description: Removes job from candidate bookmarks.
+    - Response Output (200 OK):
+        { "message": "Saved job removed successfully" }
+
+
+--------------------------------------------------------------------------------
+MODULE 4: EMPLOYER PORTAL API (`/api/employer`)
+--------------------------------------------------------------------------------
+
+23. GET /api/employer/profile
+    - Auth Required: JWT Role: `employer`
+    - Description: Retrieves hiring company profile metadata.
+    - Response Output (200 OK):
+        {
+          "employer_id": 3,
+          "user_id": 15,
+          "company_name": "Tech Corp",
+          "email": "hr@techcorp.com",
+          "industry": "Software",
+          "company_size": "100-500",
+          "website": "https://techcorp.com",
+          "location": "San Francisco, CA",
+          "description": "Building cloud infrastructure...",
+          "logo_url": "/uploads/logos/logo-techcorp.png"
+        }
+
+24. PUT /api/employer/profile
+    - Auth Required: JWT Role: `employer`
+    - Description: Updates company organization metadata.
+    - Request Body (JSON):
+        {
+          "company_name": "Tech Corp Inc",
+          "industry": "Cloud & AI Services",
+          "company_size": "500-1000",
+          "website": "https://techcorp.io",
+          "location": "San Francisco, CA",
+          "description": "Updated company description..."
+        }
+    - Response Output (200 OK):
+        { "message": "Company profile updated successfully", "profile": { ... } }
+
+25. POST /api/employer/logo
+    - Auth Required: JWT Role: `employer`
+    - Content-Type: `multipart/form-data`
+    - Description: Uploads company logo image file (PNG, JPG, SVG up to 2MB).
+    - Form Payload: `logo` (File)
+    - Response Output (200 OK):
+        {
+          "message": "Logo uploaded successfully",
+          "logo_url": "/uploads/logos/logo-3-1727345600.png"
+        }
+
+26. GET /api/employer/stats
+    - Auth Required: JWT Role: `employer`
+    - Description: Aggregates employer hiring pipeline stats.
+    - Response Output (200 OK):
+        {
+          "active_jobs_count": 4,
+          "total_applicants_count": 38,
+          "pending_reviews_count": 12,
+          "hired_count": 5
+        }
+
+27. GET /api/employer/jobs
+    - Auth Required: JWT Role: `employer`
+    - Description: Lists all jobs posted by logged-in employer with application counts.
+    - Response Output (200 OK):
+        [
+          {
+            "job_id": 101,
+            "title": "Lead Fullstack Engineer",
+            "location": "Remote",
+            "job_type": "Full-time",
+            "status": "open",
+            "is_verified": true,
+            "applicant_count": 14,
+            "created_at": "2026-09-20T10:00:00.000Z"
+          }
+        ]
+
+28. POST /api/employer/jobs
+    - Auth Required: JWT Role: `employer`
+    - Description: Creates and publishes a new job posting with skill tags.
+    - Request Body (JSON):
+        {
+          "title": "Senior Frontend Engineer",
+          "description": "We are seeking an Angular expert...",
+          "location": "Austin, TX / Remote",
+          "job_type": "Full-time", // 'Full-time'|'Part-time'|'Contract'|'Remote'|'Internship'
+          "salary_min": 110000,
+          "salary_max": 150000,
+          "skills": ["Angular", "TypeScript", "TailwindCSS"]
+        }
+    - Response Output (201 Created):
+        {
+          "message": "Job created successfully",
+          "job_id": 108,
+          "status": "open"
+        }
+
+29. GET /api/employer/jobs/:id
+    - Auth Required: JWT Role: `employer`
+    - Path Parameter: `id` (INTEGER)
+    - Description: Inspects employer's job posting and application summary.
+    - Response Output (200 OK):
+        {
+          "job_id": 101,
+          "title": "Lead Fullstack Engineer",
+          "description": "Full job description...",
+          "location": "Remote",
+          "job_type": "Full-time",
+          "salary_min": 120000,
+          "salary_max": 160000,
+          "status": "open",
+          "is_verified": true,
+          "skills": ["TypeScript", "NestJS", "Angular"],
+          "applications": [
+            {
+              "application_id": 42,
+              "seeker_name": "Jane Doe",
+              "seeker_title": "Fullstack Developer",
+              "status": "applied",
+              "applied_at": "2026-09-22T14:30:00.000Z"
+            }
+          ]
+        }
+
+30. PUT /api/employer/jobs/:id
+    - Auth Required: JWT Role: `employer`
+    - Path Parameter: `id` (INTEGER)
+    - Description: Updates job details, salary range, or status (open/closed).
+    - Request Body (JSON):
+        {
+          "title": "Lead Fullstack Engineer (Updated)",
+          "status": "open",
+          "salary_min": 130000,
+          "salary_max": 170000
+        }
+    - Response Output (200 OK):
+        { "message": "Job updated successfully", "job": { ... } }
+
+31. DELETE /api/employer/jobs/:id
+    - Auth Required: JWT Role: `employer`
+    - Path Parameter: `id` (INTEGER)
+    - Description: Closes or soft-deletes a job posting.
+    - Response Output (200 OK):
+        { "message": "Job deleted successfully" }
+
+32. GET /api/employer/applications
+    - Auth Required: JWT Role: `employer`
+    - Description: Global table of all candidate applications across all employer's jobs.
+    - Response Output (200 OK):
+        [
+          {
+            "application_id": 42,
+            "job_id": 101,
+            "job_title": "Lead Fullstack Engineer",
+            "seeker_id": 5,
+            "seeker_name": "Jane Doe",
+            "seeker_email": "jane@example.com",
+            "seeker_title": "Fullstack Developer",
+            "status": "applied",
+            "resume_url": "/uploads/resumes/resume-5.pdf",
+            "applied_at": "2026-09-22T14:30:00.000Z"
+          }
+        ]
+
+33. GET /api/employer/applications/job/:job_id
+    - Auth Required: JWT Role: `employer`
+    - Path Parameter: `job_id` (INTEGER)
+    - Description: Lists all candidate applications for a specific job posting.
+    - Response Output (200 OK):
+        [ { "application_id": 42, "seeker_name": "Jane Doe", "status": "applied", ... } ]
+
+34. GET /api/employer/applications/:id
+    - Auth Required: JWT Role: `employer`
+    - Path Parameter: `id` (INTEGER)
+    - Description: Detailed candidate application view with candidate profile, resume, and status controls.
+    - Response Output (200 OK):
+        {
+          "application_id": 42,
+          "job_id": 101,
+          "job_title": "Lead Fullstack Engineer",
+          "status": "applied",
+          "cover_note": "Here is my application...",
+          "applied_at": "2026-09-22T14:30:00.000Z",
+          "candidate": {
+            "seeker_id": 5,
+            "name": "Jane Doe",
+            "email": "jane@example.com",
+            "title": "Fullstack Developer",
+            "phone": "+1-555-0192",
+            "location": "Austin, TX",
+            "bio": "Experienced engineer...",
+            "resume_url": "/uploads/resumes/resume-5.pdf",
+            "skills": [ { "name": "TypeScript", "level": "Expert" } ]
+          }
+        }
+
+35. PATCH /api/employer/applications/:id/status
+    - Auth Required: JWT Role: `employer`
+    - Path Parameter: `id` (INTEGER)
+    - Description: Updates application status in candidate pipeline (applied -> shortlisted | rejected | hired).
+    - Request Body (JSON):
+        {
+          "status": "shortlisted" // 'applied' | 'shortlisted' | 'rejected' | 'hired'
+        }
+    - Response Output (200 OK):
+        {
+          "message": "Application status updated successfully",
+          "application_id": 42,
+          "status": "shortlisted"
+        }
+
+
+--------------------------------------------------------------------------------
+MODULE 5: ADMIN MODERATION API (`/api/admin`)
+--------------------------------------------------------------------------------
+
+36. GET /api/admin/dashboard
+    - Auth Required: JWT Role: `admin`
+    - Description: System-wide dashboard metrics (Total Users, JobSeekers, Employers, Total Jobs, Verified Jobs, Applications).
+    - Response Output (200 OK):
+        {
+          "total_users": 150,
+          "total_seekers": 110,
+          "total_employers": 38,
+          "total_jobs": 64,
+          "verified_jobs": 52,
+          "total_applications": 240,
+          "recent_logs": [ { "action": "VERIFY_JOB", "created_at": "..." } ]
+        }
+
+37. GET /api/admin/users
+    - Auth Required: JWT Role: `admin`
+    - Description: System user directory with role and status filtering.
+    - Query Parameters: `role` ('jobseeker'|'employer'|'admin'), `search` (email/name)
+    - Response Output (200 OK):
+        [
+          {
+            "user_id": 12,
+            "email": "user@example.com",
+            "role": "jobseeker",
+            "status": "active",
+            "created_at": "2026-09-15T08:00:00.000Z",
+            "display_name": "Jane Doe"
+          }
+        ]
+
+38. GET /api/admin/users/:user_id
+    - Auth Required: JWT Role: `admin`
+    - Path Parameter: `user_id` (INTEGER)
+    - Description: Inspect user account, profile details, and activity.
+    - Response Output (200 OK):
+        {
+          "user_id": 12,
+          "email": "user@example.com",
+          "role": "jobseeker",
+          "status": "active",
+          "created_at": "2026-09-15T08:00:00.000Z",
+          "profile": { ... }
+        }
+
+39. PATCH /api/admin/users/:user_id/status
+    - Auth Required: JWT Role: `admin`
+    - Path Parameter: `user_id` (INTEGER)
+    - Description: Modifies user status (active vs suspended). Includes self-preservation guard.
+    - Request Body (JSON):
+        {
+          "status": "suspended" // 'active' | 'suspended'
+        }
+    - Response Output (200 OK):
+        { "message": "User status updated to suspended", "user_id": 12, "status": "suspended" }
+
+40. DELETE /api/admin/users/:user_id
+    - Auth Required: JWT Role: `admin`
+    - Path Parameter: `user_id` (INTEGER)
+    - Description: Permanently removes user account and associated profile records. Includes self-preservation guard.
+    - Response Output (200 OK):
+        { "message": "User account deleted successfully" }
+
+41. GET /api/admin/all-jobs
+    - Auth Required: JWT Role: `admin`
+    - Description: Complete platform job postings list with verification filter.
+    - Query Parameters: `is_verified` (boolean), `status` ('open'|'closed')
+    - Response Output (200 OK):
+        [
+          {
+            "job_id": 101,
+            "title": "Lead Fullstack Engineer",
+            "company_name": "Tech Corp",
+            "location": "Remote",
+            "is_verified": true,
+            "status": "open",
+            "created_at": "2026-09-20T10:00:00.000Z"
+          }
+        ]
+
+42. PATCH /api/admin/verify-job/:job_id
+    - Auth Required: JWT Role: `admin`
+    - Path Parameter: `job_id` (INTEGER)
+    - Description: Grants verified checkmark status to job posting and records audit log.
+    - Response Output (200 OK):
+        { "message": "Job verified successfully", "job_id": 101, "is_verified": true }
+
+43. PATCH /api/admin/unverify-job/:job_id
+    - Auth Required: JWT Role: `admin`
+    - Path Parameter: `job_id` (INTEGER)
+    - Description: Revokes verification checkmark from job posting.
+    - Response Output (200 OK):
+        { "message": "Job unverified successfully", "job_id": 101, "is_verified": false }
+
+44. DELETE /api/admin/jobs/:job_id
+    - Auth Required: JWT Role: `admin`
+    - Path Parameter: `job_id` (INTEGER)
+    - Description: Moderation delete job posting.
+    - Response Output (200 OK):
+        { "message": "Job deleted by admin" }
+
+45. GET /api/admin/logs
+    - Auth Required: JWT Role: `admin`
+    - Description: Administrative security audit trail stream.
+    - Response Output (200 OK):
+        [
+          {
+            "log_id": 1,
+            "admin_id": 1,
+            "admin_email": "admin@jobytes.com",
+            "action": "VERIFY_JOB",
+            "target_type": "JOB",
+            "target_id": 101,
+            "details": "Verified job 'Lead Fullstack Engineer'",
+            "created_at": "2026-09-26T12:00:00.000Z"
+          }
+        ]
+
+
+--------------------------------------------------------------------------------
+MODULE 6: FILE STORAGE & ASSET STREAMING API (`/api/uploads`)
+--------------------------------------------------------------------------------
+
+46. GET /api/uploads/resumes/:filename
+    - Auth Required: Authenticated (JobSeeker owner, Employer reviewing applicant, or Admin)
+    - Path Parameter: `filename` (string e.g. "resume-5-1727345600.pdf")
+    - Description: Streams candidate resume file with PDF/DOC headers.
+    - Response Output: Binary File Stream (`application/pdf` or `application/octet-stream`)
+
+47. GET /api/uploads/logos/:filename
+    - Auth Required: Public (None)
+    - Path Parameter: `filename` (string e.g. "logo-3-1727345600.png")
+    - Description: Streams company logo image.
+    - Response Output: Image Stream (`image/png`, `image/jpeg`, `image/svg+xml`)
+
+================================================================================
+END OF SPECIFICATION CATALOG
+================================================================================

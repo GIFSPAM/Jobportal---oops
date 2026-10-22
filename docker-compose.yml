@@ -1,0 +1,58 @@
+services:
+  db:
+    image: mariadb:11
+    container_name: jobportal-oops-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-root}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-job_portal}
+      MARIADB_USER: ${MARIADB_USER:-jobportal}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-jobportal}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/mariadb-init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: jobportal-oops-backend
+    restart: unless-stopped
+    environment:
+      PORT: ${PORT:-5000}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-jobportal}
+      DB_PASS: ${DB_PASS:-jobportal}
+      DB_NAME: ${DB_NAME:-job_portal}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      ADMIN_SECRET: ${ADMIN_SECRET:-admin-secret}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        API_BASE_URL: ${API_BASE_URL:-http://localhost:5000/api}
+    container_name: jobportal-oops-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  db_data:

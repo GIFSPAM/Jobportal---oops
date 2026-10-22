@@ -1,0 +1,284 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Newsreader:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@source "./";
+
+:root {
+  /* Warm Professional — Job Portal Palette Direct Tokens */
+  --bg:              #FAF8F3;  /* page background (Warm Cream) */
+  --surface:         #FFFFFF;  /* cards & modals (Crisp White) */
+  --text-primary:    #1F2A24;  /* headings, job titles (Deep Charcoal) */
+  --text-secondary:  #6B6459;  /* meta text: company, location (Warm Taupe) */
+  --border:          #D8D2C4;  /* card borders, input borders (Soft Stone) */
+  --accent:          #D4622A;  /* buttons, CTAs (Warm Terracotta) */
+  --accent-hover:    #B85220;  /* hover state */
+  --success-bg:      #E7EFE9;  /* match % badge background (Soft Sage) */
+  --success-text:    #2E4A38;  /* match % badge text (Deep Pine) */
+  --tag-bg:          #F3ECE0;  /* skill tag background (Warm Parchment) */
+  --tag-text:        #7A5A32;  /* skill tag text (Warm Bronze) */
+
+  /* Legacy Aliases */
+  --color-brand-bg: var(--bg);
+  --color-surface-card: var(--surface);
+  --color-text-main: var(--text-primary);
+  --color-text-muted: var(--text-secondary);
+  --color-border-stone: var(--border);
+  --color-brand-accent: var(--accent);
+  --color-brand-accent-hover: var(--accent-hover);
+  --color-badge-sage-bg: var(--success-bg);
+  --color-badge-sage-text: var(--success-text);
+  --color-chip-parchment-bg: var(--tag-bg);
+  --color-chip-parchment-text: var(--tag-text);
+}
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
+  --font-serif: "Newsreader", Georgia, serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Utility class mappings */
+  --color-bg: #FAF8F3;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #1F2A24;
+  --color-text-secondary: #6B6459;
+  --color-border: #D8D2C4;
+  --color-accent: #D4622A;
+  --color-accent-hover: #B85220;
+  --color-success-bg: #E7EFE9;
+  --color-success-text: #2E4A38;
+  --color-tag-bg: #F3ECE0;
+  --color-tag-text: #7A5A32;
+
+  --color-brand-bg: #FAF8F3;
+  --color-surface-card: #FFFFFF;
+  --color-text-main: #1F2A24;
+  --color-text-muted: #6B6459;
+  --color-border-stone: #D8D2C4;
+  --color-brand-accent: #D4622A;
+  --color-brand-accent-hover: #B85220;
+  --color-badge-sage-bg: #E7EFE9;
+  --color-badge-sage-text: #2E4A38;
+  --color-chip-parchment-bg: #F3ECE0;
+  --color-chip-parchment-text: #7A5A32;
+}
+
+
+@layer base {
+  body {
+    background-color: var(--color-brand-bg);
+    color: var(--color-text-main);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+}
+
+/* Warm Professional Layout Atmosphere */
+.atmosphere {
+  background: 
+    radial-gradient(circle at 50% -10%, rgba(212, 98, 42, 0.06) 0%, transparent 60%),
+    radial-gradient(circle at 90% 80%, rgba(231, 239, 233, 0.5) 0%, transparent 50%);
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Elevated Warm Professional Glass Card */
+.glass-card {
+  background-color: #FFFFFF;
+  border: 1.5px solid #C8C2B4;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px -2px rgba(31, 42, 36, 0.08);
+  transition: all 0.25s ease-in-out;
+}
+
+.glass-card:hover {
+  border-color: #D4622A;
+  box-shadow: 0 12px 32px -4px rgba(212, 98, 42, 0.2);
+}
+
+/* Input Fields */
+.input-field {
+  width: 100%;
+  height: 50px;
+  background-color: #FFFFFF;
+  border: 1.5px solid #C8C2B4;
+  border-radius: 12px;
+  padding-left: 18px;
+  padding-right: 18px;
+  color: #1F2A24;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #D4622A;
+  box-shadow: 0 0 0 4px rgba(212, 98, 42, 0.2);
+}
+
+.input-field::placeholder {
+  color: #554E44;
+}
+
+.input-field-with-icon {
+  padding-left: 48px;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: #D4622A;
+  color: #FFFFFF;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 18px rgba(212, 98, 42, 0.35);
+}
+
+.btn-primary:hover {
+  background-color: #B85220;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(212, 98, 42, 0.45);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Badge Styles */
+.badge-sage {
+  background-color: #E7EFE9;
+  color: #1E3A28;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid rgba(46, 74, 56, 0.2);
+}
+
+.chip-parchment {
+  background-color: #F3ECE0;
+  color: #684A22;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  border: 1px solid #D4C7B3;
+}
+
+/* Native select styling */
+select.input-field {
+  appearance: none;
+  cursor: pointer;
+}
+
+select.input-field option {
+  background-color: #FFFFFF;
+  color: #1F2A24;
+}
+
+.hero-text {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #1F2A24;
+}
+
+/* Animations */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: page-enter 300ms ease-out forwards;
+}
+
+/* Staggered entrance for rows of cards (StatCard `index` input). */
+.stagger-1 { animation-delay: 60ms; }
+.stagger-2 { animation-delay: 120ms; }
+.stagger-3 { animation-delay: 180ms; }
+.stagger-4 { animation-delay: 240ms; }
+.stagger-5 { animation-delay: 300ms; }
+.stagger-6 { animation-delay: 360ms; }
+.stagger-7 { animation-delay: 420ms; }
+.stagger-8 { animation-delay: 480ms; }
+
+/* Skeleton shimmer used by the shared SkeletonComponent. */
+@keyframes loading-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.loading-pulse {
+  background-color: #E7E1D5;
+  border-radius: 12px;
+  animation: loading-pulse 1.4s ease-in-out infinite;
+}
+
+/* Toast Notifications */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.toast-in {
+  animation: toast-in 250ms ease-out;
+}
+
+/* Orbit & Spinning Logo Animation (High-Contrast Warm Professional) */
+.orbit-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 640px;
+  height: 640px;
+}
+
+.orbit-ring {
+  position: absolute;
+  border-radius: 9999px;
+  border: 2px dashed rgba(212, 98, 42, 0.45);
+  box-shadow: 0 0 20px rgba(212, 98, 42, 0.08), inset 0 0 20px rgba(212, 98, 42, 0.04);
+  pointer-events: none;
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-orbit {
+  animation: orbit var(--duration, 25s) linear infinite;
+}
+
+.animate-orbit-reverse {
+  animation: orbit var(--duration, 35s) linear infinite reverse;
+}
+
+.orbit-logo-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 12px;
+  background-color: #FFFFFF;
+  border: 2px solid #1F2A24;
+  border-radius: 18px;
+  box-shadow: 0 10px 25px -4px rgba(31, 42, 36, 0.2), 0 4px 8px -2px rgba(212, 98, 42, 0.15);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.orbit-logo-card:hover {
+  border-color: #D4622A;
+  box-shadow: 0 14px 30px -4px rgba(212, 98, 42, 0.35);
+  transform: scale(1.2) !important;
+}
+
+
