@@ -6,7 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { EmployerService } from '../../core/employer/employer.service';
 import { EmployerJob } from '../../core/models/employer';
 import { ToastService } from '../../core/toast/toast.service';
@@ -84,12 +84,16 @@ const COLUMNS = ['Job', 'Applicants', 'Status', 'Verification', 'Posted', 'Actio
             </thead>
             <tbody>
               @for (job of jobs(); track job.job_id) {
-                <tr class="border-b border-[#EFE9DD] last:border-0 hover:bg-[#FAF8F3] transition-colors">
+                <tr
+                  class="border-b border-[#EFE9DD] last:border-0 hover:bg-[#FAF8F3] transition-colors cursor-pointer group"
+                  (click)="goToJob(job)"
+                >
                   <td class="px-5 py-4">
                     <a
                       [routerLink]="['/employer/my-jobs', job.job_id]"
                       [state]="{ job: job }"
-                      class="font-bold text-[#1F2A24] hover:text-[#D4622A] transition-colors"
+                      (click)="$event.stopPropagation()"
+                      class="font-bold text-[#1F2A24] group-hover:text-[#D4622A] transition-colors"
                     >
                       {{ job.title || 'Untitled role' }}
                     </a>
@@ -100,7 +104,8 @@ const COLUMNS = ['Job', 'Applicants', 'Status', 'Verification', 'Posted', 'Actio
                   <td class="px-5 py-4">
                     <a
                       [routerLink]="['/employer/applications/job', job.job_id]"
-                      class="font-bold text-[#1F2A24] hover:text-[#D4622A] transition-colors"
+                      (click)="$event.stopPropagation()"
+                      class="inline-flex items-center justify-center min-w-8 px-3 py-1 rounded-full bg-brand-accent/10 border border-brand-accent/20 font-bold text-xs text-brand-accent hover:bg-brand-accent hover:text-white active:scale-95 transition-all shadow-sm"
                     >
                       {{ job.applicant_count }}
                     </a>
@@ -108,10 +113,10 @@ const COLUMNS = ['Job', 'Applicants', 'Status', 'Verification', 'Posted', 'Actio
                   <td class="px-5 py-4">
                     <button
                       type="button"
-                      (click)="toggleStatus(job)"
+                      (click)="toggleStatus(job); $event.stopPropagation()"
                       [disabled]="busyId() === job.job_id"
                       title="Click to open/close"
-                      class="disabled:opacity-50"
+                      class="inline-block p-0.5 rounded-full hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                     >
                       <app-status-badge variant="job" [value]="job.status" />
                     </button>
@@ -126,35 +131,44 @@ const COLUMNS = ['Job', 'Applicants', 'Status', 'Verification', 'Posted', 'Actio
                     {{ job.posted_at | appDate }}
                   </td>
                   <td class="px-5 py-4 whitespace-nowrap">
-                    <div class="flex items-center gap-3 text-xs font-bold">
+                    <div class="flex items-center gap-2 text-xs font-bold">
+                      <a
+                        [routerLink]="['/employer/my-jobs', job.job_id]"
+                        [state]="{ job: job, edit: true }"
+                        (click)="$event.stopPropagation()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#D8D2C4] bg-[#FAF8F3] text-xs font-bold text-[#1F2A24] hover:bg-white hover:border-[#D4622A] hover:text-[#D4622A] active:scale-95 transition-all shadow-sm"
+                      >
+                        Edit
+                      </a>
                       <a
                         [routerLink]="['/employer/applications/job', job.job_id]"
                         [state]="{ jobTitle: job.title || 'Untitled Job' }"
-                        class="text-[#6B6459] hover:text-[#D4622A] transition-colors"
+                        (click)="$event.stopPropagation()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#D8D2C4] bg-[#FAF8F3] text-xs font-bold text-[#1F2A24] hover:bg-white hover:border-[#D4622A] hover:text-[#D4622A] active:scale-95 transition-all shadow-sm"
                       >
                         Applicants
                       </a>
                       @if (confirmingId() === job.job_id) {
                         <button
                           type="button"
-                          (click)="remove(job.job_id)"
+                          (click)="remove(job.job_id); $event.stopPropagation()"
                           [disabled]="busyId() === job.job_id"
-                          class="text-red-500 hover:underline disabled:opacity-50"
+                          class="inline-flex items-center px-3 py-1.5 rounded-full bg-red-600 text-white text-xs font-bold hover:bg-red-700 active:scale-95 transition-all shadow-sm disabled:opacity-50"
                         >
                           {{ busyId() === job.job_id ? 'Deleting…' : 'Sure?' }}
                         </button>
                         <button
                           type="button"
-                          (click)="confirmingId.set(null)"
-                          class="text-text-muted hover:text-[#1F2A24]"
+                          (click)="confirmingId.set(null); $event.stopPropagation()"
+                          class="inline-flex items-center px-3 py-1.5 rounded-full border border-[#D8D2C4] bg-white text-xs font-bold text-text-muted hover:text-[#1F2A24] active:scale-95 transition-all"
                         >
                           Cancel
                         </button>
                       } @else {
                         <button
                           type="button"
-                          (click)="confirmingId.set(job.job_id)"
-                          class="text-red-500 hover:underline"
+                          (click)="confirmingId.set(job.job_id); $event.stopPropagation()"
+                          class="inline-flex items-center px-3 py-1.5 rounded-full border border-red-500/30 bg-red-50 text-xs font-bold text-red-600 hover:bg-red-100 hover:border-red-500/50 active:scale-95 transition-all shadow-sm"
                         >
                           Delete
                         </button>
@@ -172,6 +186,7 @@ const COLUMNS = ['Job', 'Applicants', 'Status', 'Verification', 'Posted', 'Actio
 })
 export class EmployerMyJobsPage {
   private readonly employerService = inject(EmployerService);
+  private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -190,6 +205,12 @@ export class EmployerMyJobsPage {
 
   constructor() {
     this.load();
+  }
+
+  goToJob(job: EmployerJob): void {
+    void this.router.navigate(['/employer/my-jobs', job.job_id], {
+      state: { job },
+    });
   }
 
   /** Flips `open` ↔ `closed` via `PATCH /api/employer/status/:job_id`. */

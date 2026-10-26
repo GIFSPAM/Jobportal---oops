@@ -98,7 +98,7 @@ function draftFrom(job: EmployerJob): JobDraftForm {
         </div>
         <a
           routerLink="/employer/my-jobs"
-          class="text-sm font-bold text-[#6B6459] hover:text-[#D4622A] transition-colors"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#D8D2C4] bg-[#FAF8F3] text-sm font-bold text-[#6B6459] hover:bg-white hover:border-[#D4622A] hover:text-[#D4622A] active:scale-95 transition-all shadow-sm"
         >
           ← All jobs
         </a>
@@ -283,14 +283,14 @@ function draftFrom(job: EmployerJob): JobDraftForm {
                 <button
                   type="button"
                   (click)="startEdit()"
-                  class="block w-full py-3 rounded-xl border border-[#D8D2C4] text-center text-sm font-bold text-[#1F2A24] hover:border-[#D4622A] hover:text-[#D4622A] transition-colors"
+                  class="block w-full py-3 rounded-full border border-[#D8D2C4] bg-[#FAF8F3] text-center text-sm font-bold text-[#1F2A24] hover:bg-white hover:border-[#D4622A] hover:text-[#D4622A] active:scale-[0.98] transition-all shadow-sm"
                 >
                   Edit job
                 </button>
               }
               <a
                 [routerLink]="['/employer/applications/job', current.job_id]"
-                class="block w-full py-3 rounded-xl border border-[#D8D2C4] text-center text-sm font-bold text-[#1F2A24] hover:border-[#D4622A] hover:text-[#D4622A] transition-colors"
+                class="block w-full py-3 rounded-full border border-[#D8D2C4] bg-[#FAF8F3] text-center text-sm font-bold text-[#1F2A24] hover:bg-white hover:border-[#D4622A] hover:text-[#D4622A] active:scale-[0.98] transition-all shadow-sm"
               >
                 View applicants ({{ current.applicant_count }})
               </a>
@@ -298,7 +298,7 @@ function draftFrom(job: EmployerJob): JobDraftForm {
                 type="button"
                 (click)="toggleStatus(current)"
                 [disabled]="busy()"
-                class="block w-full py-3 rounded-xl border border-[#D8D2C4] text-center text-sm font-bold text-[#1F2A24] hover:border-[#D4622A] hover:text-[#D4622A] transition-colors disabled:opacity-50"
+                class="block w-full py-3 rounded-full border border-[#D8D2C4] bg-[#FAF8F3] text-center text-sm font-bold text-[#1F2A24] hover:bg-white hover:border-[#D4622A] hover:text-[#D4622A] active:scale-[0.98] transition-all shadow-sm disabled:opacity-50"
               >
                 {{ current.status === 'open' ? 'Close job' : 'Reopen job' }}
               </button>
@@ -308,14 +308,14 @@ function draftFrom(job: EmployerJob): JobDraftForm {
                   type="button"
                   (click)="remove(current.job_id)"
                   [disabled]="busy()"
-                  class="block w-full py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm font-bold disabled:opacity-50"
+                  class="block w-full py-3 rounded-full bg-red-600 text-white text-center text-sm font-bold hover:bg-red-700 active:scale-[0.98] transition-all shadow-sm disabled:opacity-50"
                 >
                   {{ busy() ? 'Deleting…' : 'Yes, delete this job' }}
                 </button>
                 <button
                   type="button"
                   (click)="confirming.set(false)"
-                  class="block w-full py-2 text-xs font-bold text-text-muted hover:text-[#1F2A24]"
+                  class="block w-full py-2.5 rounded-full border border-[#D8D2C4] bg-white text-center text-xs font-bold text-text-muted hover:text-[#1F2A24] active:scale-[0.98] transition-all"
                 >
                   Cancel
                 </button>
@@ -323,7 +323,7 @@ function draftFrom(job: EmployerJob): JobDraftForm {
                 <button
                   type="button"
                   (click)="confirming.set(true)"
-                  class="block w-full py-3 rounded-xl text-red-500 text-sm font-bold hover:underline"
+                  class="block w-full py-3 rounded-full border border-red-500/30 bg-red-50 text-center text-sm font-bold text-red-600 hover:bg-red-100 hover:border-red-500/50 active:scale-[0.98] transition-all shadow-sm"
                 >
                   Delete job
                 </button>
@@ -378,9 +378,11 @@ export class EmployerMyJobDetailPage {
     // React seeds from `location.state.job` first — a click-through from the
     // list renders instantly and the fetch below only runs for deep links.
     const seeded = this.readRouterState();
+    const shouldEdit = this.shouldStartInEditMode();
     if (seeded) {
       this.jobState.set(seeded);
       this.draft.set(draftFrom(seeded));
+      if (shouldEdit) this.editMode.set(true);
       this.loading.set(false);
       return;
     }
@@ -403,7 +405,10 @@ export class EmployerMyJobDetailPage {
             this.error.set('This job could not be found in your postings.');
           }
           this.jobState.set(job);
-          if (job) this.draft.set(draftFrom(job));
+          if (job) {
+            this.draft.set(draftFrom(job));
+            if (shouldEdit) this.editMode.set(true);
+          }
           this.loading.set(false);
         },
         error: (error: unknown) => {
@@ -421,6 +426,12 @@ export class EmployerMyJobDetailPage {
       return job;
     }
     return null;
+  }
+
+  private shouldStartInEditMode(): boolean {
+    const nav = this.router.getCurrentNavigation();
+    const state = (nav?.extras.state ?? window.history.state) as { edit?: boolean } | null;
+    return !!state?.edit || this.route.snapshot.queryParamMap.get('edit') === 'true';
   }
 
   /** Opens the inline form with a fresh copy of the stored posting. */

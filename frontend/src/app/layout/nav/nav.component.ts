@@ -29,8 +29,6 @@ const ADMIN_LINKS: NavLink[] = [
   { to: '/admin/dashboard', label: 'Overview', tab: 'overview' },
   { to: '/admin/users', label: 'Users', tab: 'users' },
   { to: '/admin/jobs/moderation', label: 'Jobs', tab: 'jobs' },
-  { to: '/admin/employers', label: 'Employers', tab: 'employers' },
-  { to: '/admin/seekers', label: 'Seekers', tab: 'seekers' },
   { to: '/admin/dashboard', label: 'Logs', queryParams: { tab: 'logs' }, tab: 'logs' },
 ];
 

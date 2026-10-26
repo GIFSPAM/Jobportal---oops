@@ -1,0 +1,527 @@
+classDiagram
+    direction TB
+
+    %% ─── Enumerations ───
+    class UserRole {
+        <<enumeration>>
+        JOBSEEKER
+        EMPLOYER
+        ADMIN
+    }
+
+    class JobType {
+        <<enumeration>>
+        FULL_TIME
+        PART_TIME
+        INTERNSHIP
+    }
+
+    class JobStatus {
+        <<enumeration>>
+        OPEN
+        CLOSED
+    }
+
+    class ApplicationStatus {
+        <<enumeration>>
+        APPLIED
+        SHORTLISTED
+        REJECTED
+        HIRED
+    }
+
+    class SkillProficiency {
+        <<enumeration>>
+        BEGINNER
+        INTERMEDIATE
+        ADVANCED
+    }
+
+    class CompanySize {
+        <<enumeration>>
+        SIZE_1_10
+        SIZE_11_50
+        SIZE_51_200
+        SIZE_201_500
+        SIZE_500_PLUS
+    }
+
+    %% ─── Interfaces ───
+    class Envelope~T~ {
+        <<interface>>
+        +boolean success
+        +string message
+        +T data
+        +number count
+    }
+
+    class AuthenticatedUser {
+        <<interface>>
+        +number userId
+        +UserRole role
+        +string email
+    }
+
+    class CanActivate {
+        <<interface>>
+        +canActivate(ctx) boolean
+    }
+
+    class ExceptionFilter {
+        <<interface>>
+        +catch(exception, host) void
+    }
+
+    class NestInterceptor {
+        <<interface>>
+        +intercept(ctx, next) Observable
+    }
+
+    class ApiResult~T~ {
+        -T data
+        -EnvelopeOptions options
+        +withData(data, opts)$ ApiResult
+        +withMessage(msg)$ ApiResult
+        +withCount(data, count, opts)$ ApiResult
+    }
+
+    %% ─── Exception Hierarchy (Generalization <|--) ───
+    class HttpException {
+        +getStatus() number
+        +getResponse() object
+    }
+    class BadRequestError {
+        +constructor(message, details)
+    }
+    class UnauthorizedError {
+        +constructor(message)
+    }
+    class ForbiddenError {
+        +constructor(message)
+    }
+    class NotFoundError {
+        +constructor(message)
+    }
+    class ConflictError {
+        +constructor(message)
+    }
+    class UnprocessableError {
+        +constructor(message, details)
+    }
+
+    HttpException <|-- BadRequestError : extends
+    HttpException <|-- UnauthorizedError : extends
+    HttpException <|-- ForbiddenError : extends
+    HttpException <|-- NotFoundError : extends
+    HttpException <|-- ConflictError : extends
+    HttpException <|-- UnprocessableError : extends
+
+    %% ─── Entities (Composition *-- and Aggregation o--) ───
+    class User {
+        +number userId
+        +string email
+        +string passwordHash
+        +UserRole role
+        +boolean isActive
+        +Date createdAt
+        +JobSeeker seeker
+        +Employer employer
+        +AdminLog[] adminLogs
+    }
+
+    class Employer {
+        +number employerId
+        +string companyName
+        +string companyPhone
+        +string industry
+        +CompanySize companySize
+        +string companyLocation
+        +string companyWebsite
+        +string profilePictureUrl
+        +User user
+        +Job[] jobs
+    }
+
+    class JobSeeker {
+        +number seekerId
+        +string fullName
+        +string phoneNumber
+        +string education
+        +number experienceYears
+        +string resumePath
+        +string resumeFilename
+        +string profilePictureUrl
+        +User user
+        +SeekerSkill[] seekerSkills
+        +Application[] applications
+        +SavedJob[] savedJobs
+    }
+
+    class Job {
+        +number jobId
+        +number employerId
+        +string title
+        +string description
+        +string location
+        +JobType jobType
+        +number salaryMin
+        +number salaryMax
+        +number applicationCount
+        +JobStatus status
+        +boolean isVerified
+        +number verifiedBy
+        +Date verifiedAt
+        +Date postedAt
+        +Employer employer
+        +JobSkill[] jobSkills
+        +Application[] applications
+        +SavedJob[] savedBy
+    }
+
+    class Application {
+        +number applicationId
+        +number jobId
+        +number seekerId
+        +ApplicationStatus status
+        +Date appliedAt
+        +Job job
+        +JobSeeker seeker
+    }
+
+    class Skill {
+        +number skillId
+        +string skillName
+        +JobSkill[] jobSkills
+        +SeekerSkill[] seekerSkills
+    }
+
+    class JobSkill {
+        +number jobId
+        +number skillId
+        +Job job
+        +Skill skill
+    }
+
+    class SeekerSkill {
+        +number seekerId
+        +number skillId
+        +SkillProficiency proficiency
+        +JobSeeker seeker
+        +Skill skill
+    }
+
+    class SavedJob {
+        +number seekerId
+        +number jobId
+        +Date savedAt
+        +JobSeeker seeker
+        +Job job
+    }
+
+    class AdminLog {
+        +number logId
+        +number adminId
+        +string actionType
+        +string targetTable
+        +number targetId
+        +Date actionTime
+        +User admin
+    }
+
+    %% Entity Composition (child deleted if parent deleted)
+    User "1" *-- "0..1" Employer : composition
+    User "1" *-- "0..1" JobSeeker : composition
+    User "1" *-- "0..*" AdminLog : composition
+    Employer "1" *-- "0..*" Job : composition
+    Job "1" *-- "0..*" Application : composition
+    Job "1" *-- "0..*" JobSkill : composition
+    Job "1" *-- "0..*" SavedJob : composition
+    JobSeeker "1" *-- "0..*" Application : composition
+    JobSeeker "1" *-- "0..*" SeekerSkill : composition
+    JobSeeker "1" *-- "0..*" SavedJob : composition
+
+    %% Entity Aggregation (shared entity reference)
+    Skill "1" o-- "0..*" JobSkill : aggregation
+    Skill "1" o-- "0..*" SeekerSkill : aggregation
+
+    %% ─── Guards & Interceptors (Realization <|..) ───
+    class JwtAuthGuard {
+        -Reflector reflector
+        -SessionService sessions
+        +canActivate(ctx) Promise
+        -extractBearerToken(header) string
+    }
+    class RolesGuard {
+        -Reflector reflector
+        +canActivate(ctx) boolean
+    }
+    CanActivate <|.. JwtAuthGuard : realizes
+    CanActivate <|.. RolesGuard : realizes
+
+    class HttpExceptionFilter {
+        -Logger logger
+        +catch(exception, host) void
+        -toPayload(exception) object
+        -toText(candidates) string
+    }
+    class ResponseEnvelopeInterceptor {
+        +intercept(ctx, next) Observable
+        -envelop(value) Envelope
+    }
+    ExceptionFilter <|.. HttpExceptionFilter : realizes
+    NestInterceptor <|.. ResponseEnvelopeInterceptor : realizes
+
+    %% ─── Storage Layer (Realization <|..) ───
+    class ImageStorage {
+        <<abstract>>
+        +upload(buffer, folder, name)* Promise
+    }
+    class CloudinaryImageStorage {
+        +constructor(credentials)
+        +upload(buffer, folder, name) Promise
+    }
+    class LocalImageStorage {
+        -string rootDirectory
+        +constructor(rootDirectory)
+        +upload(buffer, folder, name) Promise
+        -sanitize(folder) string
+    }
+    class ResumeStorage {
+        -string directory
+        +constructor(directory)
+        +save(buffer, originalName) StoredFile
+        +resolve(storedPath) string
+        +downloadName(storedPath, fallback) string
+        +stream(absPath, filename, res) Promise
+    }
+    ImageStorage <|.. CloudinaryImageStorage : realizes
+    ImageStorage <|.. LocalImageStorage : realizes
+
+    %% ─── Auth Module ───
+    class AuthController {
+        -AuthService authService
+        +register(dto) Promise
+        +login(dto) Promise
+    }
+    class AuthService {
+        -Logger logger
+        -Repository users
+        -DataSource dataSource
+        -JwtService jwtService
+        -ConfigService config
+        +register(dto) Promise
+        +login(dto) Promise
+        +signToken(user) Promise
+        -toResponse(user) Promise
+        -assertRoleRequirements(dto) void
+        -isDuplicateKeyError(err) boolean
+    }
+    class SessionService {
+        -Repository users
+        -JwtService jwtService
+        +resolve(token) Promise
+    }
+    AuthController --> AuthService : association
+    JwtAuthGuard --> SessionService : association
+
+    %% ─── Admin Module ───
+    class AdminController {
+        -AdminService admin
+        +stats() Promise
+        +employers() Promise
+        +seekers() Promise
+        +users() Promise
+        +user(userId) Promise
+        +updateStatus(user, userId, dto) Promise
+        +deleteUser(user, userId) Promise
+        +deleteJob(user, jobId) Promise
+        +verify(user, jobId) Promise
+        +unverify(user, jobId) Promise
+        +jobs(query) Promise
+        +logs() Promise
+    }
+    class AdminService {
+        -Repository users
+        -Repository jobs
+        -Repository logs
+        -Repository employers
+        -Repository seekers
+        -Repository applications
+        -DataSource dataSource
+        +stats() Promise
+        +listJobs(query) Promise
+        +listUsers() Promise
+        +getUser(userId) Promise
+        +updateUserStatus(adminId, userId, isActive) Promise
+        +deleteUser(adminId, userId) Promise
+        +listEmployers() Promise
+        +listSeekers() Promise
+        +verifyJob(adminId, jobId) Promise
+        +unverifyJob(adminId, jobId) Promise
+        +deleteJob(adminId, jobId) Promise
+        +listLogs() Promise
+        -log(adminId, action, table, targetId) Promise
+    }
+    AdminController --> AdminService : association
+
+    %% ─── Employer Module ───
+    class EmployerController {
+        -EmployerStatsService stats
+        -EmployerJobService jobs
+        -EmployerApplicantService applicants
+        -EmployerProfileService profile
+        +statsFor(user) Promise
+        +createJob(user, dto) Promise
+        +listMyJobs(user) Promise
+        +updateJob(user, jobId, dto) Promise
+        +updateJobStatus(user, jobId, dto) Promise
+        +deleteJob(user, jobId) Promise
+        +listApplicants(user, jobId, query) Promise
+        +updateApplicationStatus(user, appId, dto) Promise
+        +getProfile(user) Promise
+        +updateProfile(user, dto) Promise
+        +uploadLogo(user, file) Promise
+    }
+    class EmployerStatsService {
+        -Repository jobs
+        -Repository applications
+        +stats(employerId) Promise
+    }
+    class EmployerJobService {
+        -Repository jobs
+        -DataSource dataSource
+        +create(employerId, dto) Promise
+        +listMine(employerId) Promise
+        +update(employerId, jobId, dto) Promise
+        +updateStatus(employerId, jobId, status) Promise
+        +remove(employerId, jobId) Promise
+        -buildPatch(dto) Record
+        -replaceSkills(mgr, jobId, names) Promise
+        -findOrCreateSkill(mgr, name) Promise
+    }
+    class EmployerApplicantService {
+        -Repository applications
+        -Repository jobs
+        -Repository seekerSkills
+        +listApplicants(empId, jobId, query) Promise
+        +updateApplicationStatus(empId, appId, dto) Promise
+        -buildQuery(jobId, query) SelectQueryBuilder
+        -loadSkills(seekerIds) Promise
+    }
+    class EmployerProfileService {
+        -Repository employers
+        -ImageStorage imageStorage
+        +getProfile(employerId) Promise
+        +updateProfile(employerId, dto) Promise
+        +updateLogo(employerId, file) Promise
+        -pick(dto) Partial
+        -findOrFail(employerId) Promise
+    }
+    EmployerController --> EmployerStatsService : association
+    EmployerController --> EmployerJobService : association
+    EmployerController --> EmployerApplicantService : association
+    EmployerController --> EmployerProfileService : association
+    EmployerProfileService --> ImageStorage : association
+
+    %% ─── Seeker Module ───
+    class SeekerController {
+        -SeekerStatsService stats
+        -SeekerApplicationService applications
+        -SeekerSavedJobService savedJobs
+        -SeekerProfileService profile
+        -ResumeStorage resumeStorage
+        +findStats(user) Promise
+        +apply(user, jobId) Promise
+        +listApplications(user) Promise
+        +revoke(user, appId) Promise
+        +match(user, jobId) Promise
+        +saveJob(user, jobId) Promise
+        +listSavedJobs(user) Promise
+        +removeSavedJob(user, jobId) Promise
+        +getProfile(user) Promise
+        +updateProfile(user, dto) Promise
+        +updateSkills(user, dto) Promise
+        +uploadPhoto(user, file) Promise
+        +uploadResume(user, file) Promise
+        +downloadOwnResume(user, res) Promise
+        +employerOfJob(jobId) Promise
+    }
+    class SeekerStatsService {
+        -Repository applications
+        -Repository seekers
+        -Repository savedJobs
+        -Repository seekerSkills
+        +stats(seekerId) Promise
+        -countByStatus(seekerId) Promise
+    }
+    class SeekerApplicationService {
+        -Repository applications
+        -Repository seekers
+        -Repository jobs
+        -Repository jobSkills
+        +apply(seekerId, jobId) Promise
+        +list(seekerId) Promise
+        +revoke(seekerId, appId) Promise
+        +jobMatch(seekerId, jobId) Promise
+        +findEmployerOfJob(jobId) Promise
+        -loadJobSkillNames(jobId) Promise
+        -loadSeekerSkillNames(seekerId) Promise
+        -isDuplicateKeyError(err) boolean
+    }
+    class SeekerSavedJobService {
+        -Repository savedJobs
+        +save(seekerId, jobId) Promise
+        +remove(seekerId, jobId) Promise
+        +list(seekerId) Promise
+    }
+    class SeekerProfileService {
+        -Repository seekers
+        -Repository seekerSkills
+        -ResumeStorage resumeStorage
+        -ImageStorage imageStorage
+        +getProfile(seekerId) Promise
+        +updateProfile(seekerId, dto) Promise
+        +updateResume(seekerId, file) Promise
+        +getResume(seekerId) Promise
+        +updatePhoto(seekerId, file) Promise
+        +updateSkills(seekerId, dto) Promise
+        -normalize(dto) Array
+        -pickUpdatable(dto) Partial
+        -loadSkills(seekerId) Promise
+        -findOrFail(seekerId) Promise
+    }
+    SeekerController --> SeekerStatsService : association
+    SeekerController --> SeekerApplicationService : association
+    SeekerController --> SeekerSavedJobService : association
+    SeekerController --> SeekerProfileService : association
+    SeekerController --> ResumeStorage : association
+    SeekerProfileService --> ResumeStorage : association
+    SeekerProfileService --> ImageStorage : association
+
+    %% ─── Public Module ───
+    class PublicController {
+        -PublicService publicService
+        +findJobs(query) Promise
+        +findLandingJobs(query) Promise
+        +findJobById(jobId) Promise
+        +findSkills(query) Promise
+    }
+    class PublicService {
+        -Repository jobs
+        -Repository skills
+        +findJobs(query, limit) Promise
+        +findJobById(jobId) Promise
+        +findSkills(search) Promise
+        -baseQuery() SelectQueryBuilder
+        -applyFilters(qb, query) void
+    }
+    PublicController --> PublicService : association
+
+    %% ─── Storage Module ───
+    class ResumeDownloadController {
+        -Repository applications
+        -ResumeStorage resumeStorage
+        +download(appId, user, res) Promise
+        -assertMayRead(app, user) void
+    }
+    ResumeDownloadController --> ResumeStorage : association

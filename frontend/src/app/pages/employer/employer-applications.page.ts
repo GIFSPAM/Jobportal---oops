@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { EmployerService } from '../../core/employer/employer.service';
 import { EmployerApplicant, EmployerJob } from '../../core/models/employer';
@@ -86,7 +86,7 @@ function tabLabel(tab: ViewTab): string {
       </header>
 
       <div class="glass-card p-5 sm:p-6 mt-6">
-        <div class="flex flex-wrap items-center gap-3 mb-4">
+        <div class="flex flex-wrap items-center gap-3 mb-5">
           @for (tab of tabs; track tab) {
             <button
               type="button"
@@ -99,50 +99,55 @@ function tabLabel(tab: ViewTab): string {
           }
         </div>
 
-        <label
-          for="apps-search"
-          class="block text-xs font-bold uppercase tracking-widest text-text-muted mb-2"
-        >
-          Search
-        </label>
-        <div class="relative">
-          <app-icon
-            class="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"
-            name="search"
-            [size]="16"
-          />
-          <input
-            id="apps-search"
-            type="search"
-            class="input-field input-field-with-icon"
-            [placeholder]="searchPlaceholder()"
-            [value]="search()"
-            (input)="onSearch($event)"
-          />
-        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div class="md:col-span-2">
+            <label
+              for="apps-search"
+              class="block text-xs font-bold uppercase tracking-widest text-text-muted mb-2"
+            >
+              Search
+            </label>
+            <div class="relative">
+              <app-icon
+                class="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"
+                name="search"
+                [size]="16"
+              />
+              <input
+                id="apps-search"
+                type="search"
+                class="input-field input-field-with-icon w-full"
+                [placeholder]="searchPlaceholder()"
+                [value]="search()"
+                (input)="onSearch($event)"
+              />
+            </div>
+          </div>
 
-        <div class="mt-4">
-          <label
-            for="apps-skill"
-            class="block text-xs font-bold uppercase tracking-widest text-text-muted mb-2"
-          >
-            Skill
-          </label>
-          <select
-            id="apps-skill"
-            class="input-field capitalize"
-            [value]="skillFilter()"
-            (change)="onSkillFilter($event)"
-          >
-            <option value="all">All Skills</option>
-            @for (skill of availableSkills(); track skill) {
-              <option [value]="skill">{{ skill }}</option>
-            }
-          </select>
+          <div>
+            <label
+              for="apps-skill"
+              class="block text-xs font-bold uppercase tracking-widest text-text-muted mb-2"
+            >
+              Skill
+            </label>
+            <select
+              id="apps-skill"
+              class="input-field capitalize w-full"
+              [value]="skillFilter()"
+              (change)="onSkillFilter($event)"
+            >
+              <option value="all">All Skills</option>
+              @for (skill of availableSkills(); track skill) {
+                <option [value]="skill">{{ skill }}</option>
+              }
+            </select>
+          </div>
         </div>
 
         @if (activeTab() === 'applications') {
-          <div class="flex flex-wrap items-center gap-2 mt-4" role="group" aria-label="Filter by status">
+          <div class="flex flex-wrap items-center gap-2 mt-5 pt-4 border-t border-[#D8D2C4]/60" role="group" aria-label="Filter by status">
+            <span class="text-xs font-bold uppercase tracking-widest text-text-muted mr-1">Status:</span>
             @for (tab of statusTabs; track tab) {
               <button
                 type="button"
@@ -167,10 +172,15 @@ function tabLabel(tab: ViewTab): string {
         } @else if (error()) {
           <p class="py-12 text-center text-red-500">{{ error() }}</p>
         } @else if (activeTab() === 'jobs') {
-          <h2 class="text-lg font-display font-bold text-[#1F2A24] mb-6 flex items-center gap-2">
-            <app-icon name="file-text" [size]="20" class="text-brand-accent" />
-            Jobs With Applications
-          </h2>
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <h2 class="text-lg font-display font-bold text-[#1F2A24] flex items-center gap-2">
+              <app-icon name="file-text" [size]="20" class="text-brand-accent" />
+              Jobs With Applications
+            </h2>
+            <span class="text-xs font-bold text-text-muted uppercase tracking-wider">
+              {{ filteredJobs().length }} {{ filteredJobs().length === 1 ? 'job' : 'jobs' }}
+            </span>
+          </div>
 
           @if (filteredJobs().length === 0) {
             <p class="py-12 text-center text-text-muted">No matching jobs found.</p>
@@ -188,31 +198,36 @@ function tabLabel(tab: ViewTab): string {
                 </thead>
                 <tbody class="divide-y divide-[#D8D2C4]">
                   @for (job of filteredJobs(); track job.job_id) {
-                    <tr class="hover:bg-[#FAF8F3] transition-colors">
-                      <td class="py-4 px-2">
+                    <tr
+                      class="hover:bg-[#FAF8F3] transition-colors cursor-pointer group"
+                      (click)="goToJob(job)"
+                    >
+                      <td class="py-4 px-2 align-middle">
                         <a
-                          [routerLink]="['/employer/applications/job', job.job_id]"
-                          [state]="{ jobTitle: job.title || 'Untitled Job' }"
-                          class="font-medium text-[#1F2A24] inline-flex items-center gap-2 hover:text-[#D4622A] transition-colors"
+                          [routerLink]="['/employer/my-jobs', job.job_id]"
+                          [state]="{ job: job }"
+                          (click)="$event.stopPropagation()"
+                          class="font-medium text-[#1F2A24] inline-flex items-center gap-2 group-hover:text-[#D4622A] transition-colors"
                         >
                           <app-icon name="briefcase" [size]="16" class="text-brand-accent" />
                           {{ job.title || 'Untitled Job' }}
                         </a>
                         <p class="text-xs text-text-muted mt-1">Job ID: {{ job.job_id }}</p>
                       </td>
-                      <td class="py-4 px-2 text-text-muted">{{ job.location || 'N/A' }}</td>
-                      <td class="py-4 px-2 text-text-muted">
+                      <td class="py-4 px-2 text-text-muted align-middle">{{ job.location || 'N/A' }}</td>
+                      <td class="py-4 px-2 text-text-muted align-middle whitespace-nowrap">
                         {{ jobTypeLabel(job.job_type) }}
                       </td>
-                      <td class="py-4 px-2">
+                      <td class="py-4 px-2 align-middle">
                         <app-status-badge variant="job" [value]="job.status" />
                       </td>
-                      <td class="py-4 px-2 text-text-muted">{{ job.applicant_count ?? 0 }}</td>
-                      <td class="py-4 px-2">
+                      <td class="py-4 px-2 text-text-muted align-middle">{{ job.applicant_count ?? 0 }}</td>
+                      <td class="py-4 px-2 align-middle whitespace-nowrap">
                         <a
                           [routerLink]="['/employer/applications/job', job.job_id]"
                           [state]="{ jobTitle: job.title || 'Untitled Job' }"
-                          class="text-xs font-semibold text-text-muted hover:text-[#D4622A] transition-colors"
+                          (click)="$event.stopPropagation()"
+                          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#D8D2C4] bg-[#FAF8F3] text-xs font-bold text-[#1F2A24] hover:bg-white hover:border-[#D4622A] hover:text-[#D4622A] active:scale-95 transition-all shadow-sm"
                         >
                           View Applicants
                         </a>
@@ -224,10 +239,15 @@ function tabLabel(tab: ViewTab): string {
             </div>
           }
         } @else {
-          <h2 class="text-lg font-display font-bold text-[#1F2A24] mb-6 flex items-center gap-2">
-            <app-icon name="file-text" [size]="20" class="text-brand-accent" />
-            All Applications
-          </h2>
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <h2 class="text-lg font-display font-bold text-[#1F2A24] flex items-center gap-2">
+              <app-icon name="file-text" [size]="20" class="text-brand-accent" />
+              All Applications
+            </h2>
+            <span class="text-xs font-bold text-text-muted uppercase tracking-wider">
+              {{ filteredApplications().length }} {{ filteredApplications().length === 1 ? 'application' : 'applications' }}
+            </span>
+          </div>
 
           @if (filteredApplications().length === 0) {
             <p class="py-12 text-center text-text-muted">No applications found.</p>
@@ -248,13 +268,14 @@ function tabLabel(tab: ViewTab): string {
                 </thead>
                 <tbody class="divide-y divide-[#D8D2C4]">
                   @for (row of filteredApplications(); track row.application_id) {
-                    <app-employer-applicant-row
+                    <tr
+                      app-employer-applicant-row
                       [applicant]="row"
                       [showJobTitle]="true"
                       [showExperience]="false"
                       [downloadingId]="downloadingId()"
                       (download)="download($event)"
-                    />
+                    ></tr>
                   }
                 </tbody>
               </table>
@@ -267,6 +288,7 @@ function tabLabel(tab: ViewTab): string {
 })
 export class EmployerApplicationsPage {
   private readonly employerService = inject(EmployerService);
+  private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -421,19 +443,19 @@ export class EmployerApplicationsPage {
   /** Selected/unselected styling for the Jobs / All Applications switcher. */
   viewTabClasses(tab: ViewTab): string {
     const base =
-      'inline-flex items-center justify-center min-w-32 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all';
+      'inline-flex items-center justify-center min-w-36 px-5 py-2.5 rounded-full border text-sm font-bold shadow-sm active:scale-95 transition-all';
     return this.activeTab() === tab
-      ? `${base} bg-brand-accent text-white border-brand-accent`
-      : `${base} bg-[#FAF8F3] text-text-muted border-[#D8D2C4] hover:text-[#1F2A24]`;
+      ? `${base} bg-brand-accent text-white border-brand-accent shadow-brand-accent/25`
+      : `${base} bg-[#FAF8F3] text-text-muted border-[#D8D2C4] hover:bg-white hover:text-[#1F2A24] hover:border-[#1F2A24]/30`;
   }
 
   /** Selected/unselected styling for the application-status pills. */
   statusTabClasses(tab: StatusTab): string {
     const base =
-      'px-3 py-1.5 rounded-full border text-xs font-bold uppercase tracking-widest transition-all';
+      'px-4 py-1.5 rounded-full border text-xs font-bold uppercase tracking-wider shadow-sm active:scale-95 transition-all';
     return this.statusFilter() === tab
-      ? `${base} bg-brand-accent text-white border-brand-accent`
-      : `${base} bg-[#FAF8F3] text-text-muted border-[#D8D2C4] hover:text-[#1F2A24]`;
+      ? `${base} bg-brand-accent text-white border-brand-accent shadow-brand-accent/25`
+      : `${base} bg-[#FAF8F3] text-text-muted border-[#D8D2C4] hover:bg-white hover:text-[#1F2A24] hover:border-[#1F2A24]/30`;
   }
 
   onSearch(event: Event): void {
@@ -442,6 +464,12 @@ export class EmployerApplicationsPage {
 
   onSkillFilter(event: Event): void {
     this.skillFilter.set((event.target as HTMLSelectElement).value);
+  }
+
+  goToJob(job: EmployerJob): void {
+    void this.router.navigate(['/employer/my-jobs', job.job_id], {
+      state: { job },
+    });
   }
 
   /**

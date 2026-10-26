@@ -75,7 +75,7 @@ type SkillComparison = { name: string; proficiency: string | null };
         </p>
         <a
           routerLink="/employer/applications"
-          class="mt-3 inline-flex items-center gap-2 text-sm font-bold text-text-muted hover:text-[#1F2A24] transition-colors"
+          class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#D8D2C4] bg-[#FAF8F3] text-sm font-bold text-text-muted hover:bg-white hover:border-[#D4622A] hover:text-[#D4622A] active:scale-95 transition-all shadow-sm"
         >
           <app-icon name="arrow-left" [size]="16" /> Back to Applications
         </a>
@@ -162,7 +162,7 @@ type SkillComparison = { name: string; proficiency: string | null };
                 type="button"
                 (click)="saveStatus()"
                 [disabled]="savingStatus()"
-                class="btn-primary px-5 py-3 rounded-xl text-sm disabled:opacity-60"
+                class="btn-primary px-6 py-3 rounded-full text-sm font-bold shadow-sm hover:shadow active:scale-95 disabled:opacity-60 transition-all"
               >
                 {{ savingStatus() ? 'Updating…' : 'Save Status' }}
               </button>
@@ -180,7 +180,7 @@ type SkillComparison = { name: string; proficiency: string | null };
                 type="button"
                 (click)="download()"
                 [disabled]="downloading()"
-                class="inline-flex items-center gap-2 btn-primary px-5 py-3 rounded-xl text-sm disabled:opacity-60"
+                class="inline-flex items-center gap-2 btn-primary px-6 py-3 rounded-full text-sm font-bold shadow-sm hover:shadow active:scale-95 disabled:opacity-60 transition-all"
               >
                 <app-icon name="file-text" [size]="16" />
                 {{ downloading() ? 'Preparing…' : 'Download Resume' }}

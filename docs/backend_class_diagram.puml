@@ -1,0 +1,740 @@
+@startuml JobPortal_Backend_UML
+
+' ═══════════════════════════════════════════════════════════
+'  Job Portal Management System — Backend UML Class Diagram
+' ═══════════════════════════════════════════════════════════
+'  RELATIONSHIP LEGEND:
+'    --|>    Generalization  (extends / inherits)
+'    ..|>    Realization     (implements interface / abstract)
+'    *--     Composition     (strong ownership, child dies with parent)
+'    o--     Aggregation     (weak ownership, child can exist alone)
+'    -->     Directed Association
+'    ..>     Dependency      (uses)
+' ═══════════════════════════════════════════════════════════
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classFontName "Segoe UI"
+skinparam packageFontSize 14
+skinparam packageFontStyle bold
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam class {
+  BackgroundColor #FAFAFA
+  BorderColor #555555
+  ArrowColor #333333
+}
+skinparam package {
+  BackgroundColor #FFFFFF
+  BorderColor #888888
+}
+skinparam nodesep 40
+skinparam ranksep 35
+
+title **Job Portal Management System — Backend Core Logic UML Class Diagram**\n<size:11>Standard UML Notation • Composition • Aggregation • Association • Generalization • Realization</size>
+
+' ═══════════════════════════════════
+'          ENUMERATIONS
+' ═══════════════════════════════════
+
+package "Enumerations" <<Rectangle>> #F0FFF0 {
+
+  enum UserRole <<enum>> #D5E8D4 {
+    JOBSEEKER
+    EMPLOYER
+    ADMIN
+  }
+
+  enum JobType <<enum>> #D5E8D4 {
+    FULL_TIME
+    PART_TIME
+    INTERNSHIP
+  }
+
+  enum JobStatus <<enum>> #D5E8D4 {
+    OPEN
+    CLOSED
+  }
+
+  enum ApplicationStatus <<enum>> #D5E8D4 {
+    APPLIED
+    SHORTLISTED
+    REJECTED
+    HIRED
+  }
+
+  enum SkillProficiency <<enum>> #D5E8D4 {
+    BEGINNER
+    INTERMEDIATE
+    ADVANCED
+  }
+
+  enum CompanySize <<enum>> #D5E8D4 {
+    SIZE_1_10
+    SIZE_11_50
+    SIZE_51_200
+    SIZE_201_500
+    SIZE_500_PLUS
+  }
+}
+
+' ═══════════════════════════════════
+'          INTERFACES
+' ═══════════════════════════════════
+
+package "Interfaces & Contracts" <<Rectangle>> #F0F0FF {
+
+  interface Envelope <T> <<interface>> #DAE8FC {
+    + success : boolean
+    + message? : string
+    + data? : T
+    + count? : number
+  }
+
+  interface AuthenticatedUser <<interface>> #DAE8FC {
+    + userId : number
+    + role : UserRole
+    + email : string
+  }
+
+  interface CanActivate <<interface>> #DAE8FC {
+    + canActivate(ctx: ExecutionContext) : boolean
+  }
+
+  interface ExceptionFilter <<interface>> #DAE8FC {
+    + catch(exception: unknown, host: ArgumentsHost) : void
+  }
+
+  interface NestInterceptor <<interface>> #DAE8FC {
+    + intercept(ctx: ExecutionContext, next: CallHandler) : Observable
+  }
+
+  class "ApiResult<T>" as ApiResult #E1D5E7 {
+    - data : T | undefined
+    - options : EnvelopeOptions
+    __
+    - ApiResult(data, options)
+    + {static} withData(data, opts?) : ApiResult<T>
+    + {static} withMessage(msg) : ApiResult<never>
+    + {static} withCount(data, count, opts?) : ApiResult<T>
+  }
+}
+
+' ═══════════════════════════════════
+'     EXCEPTION HIERARCHY
+'     (Generalization --|>)
+' ═══════════════════════════════════
+
+package "Domain Exceptions  «Generalization»" <<Rectangle>> #FFF8E1 {
+
+  class HttpException <<NestJS>> #FFE0B2 {
+    + getStatus() : number
+    + getResponse() : string | object
+  }
+
+  class BadRequestError #FFF3E0 {
+    + constructor(message?, details?)
+  }
+
+  class UnauthorizedError #FFF3E0 {
+    + constructor(message?)
+  }
+
+  class ForbiddenError #FFF3E0 {
+    + constructor(message?)
+  }
+
+  class NotFoundError #FFF3E0 {
+    + constructor(message?)
+  }
+
+  class ConflictError #FFF3E0 {
+    + constructor(message?)
+  }
+
+  class UnprocessableError #FFF3E0 {
+    + constructor(message?, details?)
+  }
+
+  BadRequestError --|> HttpException : extends
+  UnauthorizedError --|> HttpException : extends
+  ForbiddenError --|> HttpException : extends
+  NotFoundError --|> HttpException : extends
+  ConflictError --|> HttpException : extends
+  UnprocessableError --|> HttpException : extends
+}
+
+' ═══════════════════════════════════
+'        ENTITY LAYER
+'  (Composition, Aggregation, Assoc)
+' ═══════════════════════════════════
+
+package "Entity Layer  «Composition · Aggregation · Association»" <<Rectangle>> #FFF5F5 {
+
+  class User <<Entity>> #F8CECC {
+    + userId : number «PK»
+    + email : string
+    + passwordHash : string
+    + role : UserRole
+    + isActive : boolean
+    + createdAt : Date
+    __
+    + seeker? : JobSeeker
+    + employer? : Employer
+    + adminLogs? : AdminLog[]
+  }
+
+  class Employer <<Entity>> #F8CECC {
+    + employerId : number «PK/FK»
+    + companyName : string | null
+    + companyPhone : string | null
+    + industry : string | null
+    + companySize : CompanySize | null
+    + companyLocation : string | null
+    + companyWebsite : string | null
+    + profilePictureUrl : string | null
+    __
+    + user : User
+    + jobs? : Job[]
+  }
+
+  class JobSeeker <<Entity>> #F8CECC {
+    + seekerId : number «PK/FK»
+    + fullName : string | null
+    + phoneNumber : string | null
+    + education : string | null
+    + experienceYears : number | null
+    + resumePath : string | null
+    + resumeFilename : string | null
+    + profilePictureUrl : string | null
+    __
+    + user : User
+    + seekerSkills? : SeekerSkill[]
+    + applications? : Application[]
+    + savedJobs? : SavedJob[]
+  }
+
+  class Job <<Entity>> #F8CECC {
+    + jobId : number «PK»
+    + employerId : number «FK»
+    + title : string | null
+    + description : string | null
+    + location : string | null
+    + jobType : JobType | null
+    + salaryMin : number | null
+    + salaryMax : number | null
+    + applicationCount : number
+    + status : JobStatus
+    + isVerified : boolean
+    + verifiedBy : number | null
+    + verifiedAt : Date | null
+    + postedAt : Date
+    __
+    + employer : Employer
+    + jobSkills? : JobSkill[]
+    + applications? : Application[]
+    + savedBy? : SavedJob[]
+  }
+
+  class Application <<Entity>> #F8CECC {
+    + applicationId : number «PK»
+    + jobId : number «FK»
+    + seekerId : number «FK»
+    + status : ApplicationStatus
+    + appliedAt : Date
+    __
+    + job : Job
+    + seeker : JobSeeker
+  }
+
+  class Skill <<Entity>> #F8CECC {
+    + skillId : number «PK»
+    + skillName : string
+    __
+    + jobSkills? : JobSkill[]
+    + seekerSkills? : SeekerSkill[]
+  }
+
+  class JobSkill <<Entity>> #F8CECC {
+    + jobId : number «PK/FK»
+    + skillId : number «PK/FK»
+    __
+    + job : Job
+    + skill : Skill
+  }
+
+  class SeekerSkill <<Entity>> #F8CECC {
+    + seekerId : number «PK/FK»
+    + skillId : number «PK/FK»
+    + proficiency : SkillProficiency
+    __
+    + seeker : JobSeeker
+    + skill : Skill
+  }
+
+  class SavedJob <<Entity>> #F8CECC {
+    + seekerId : number «PK/FK»
+    + jobId : number «PK/FK»
+    + savedAt : Date
+    __
+    + seeker : JobSeeker
+    + job : Job
+  }
+
+  class AdminLog <<Entity>> #F8CECC {
+    + logId : number «PK»
+    + adminId : number «FK»
+    + actionType : string | null
+    + targetTable : string | null
+    + targetId : number | null
+    + actionTime : Date
+    __
+    + admin : User
+  }
+
+  ' ── COMPOSITION (◆): child cannot exist without parent, CASCADE DELETE ──
+  User "1" *-right- "0..1" Employer : «Composition»\nshared PK\nonDelete CASCADE
+  User "1" *-left- "0..1" JobSeeker : «Composition»\nshared PK\nonDelete CASCADE
+  User "1" *-- "0..*" AdminLog : «Composition»\nonDelete CASCADE
+
+  Employer "1" *-- "0..*" Job : «Composition»\nonDelete CASCADE
+
+  Job "1" *-- "0..*" Application : «Composition»\nonDelete CASCADE
+  Job "1" *-- "0..*" JobSkill : «Composition»\nonDelete CASCADE
+  Job "1" *-- "0..*" SavedJob : «Composition»\nonDelete CASCADE
+
+  JobSeeker "1" *-- "0..*" Application : «Composition»\nonDelete CASCADE
+  JobSeeker "1" *-- "0..*" SeekerSkill : «Composition»\ncascade: true
+  JobSeeker "1" *-- "0..*" SavedJob : «Composition»\nonDelete CASCADE
+
+  ' ── AGGREGATION (◇): Skill is a shared reference, lives independently ──
+  Skill "1" o-- "0..*" JobSkill : «Aggregation»\nshared ref
+  Skill "1" o-- "0..*" SeekerSkill : «Aggregation»\nshared ref
+}
+
+' ═══════════════════════════════════
+'     GUARDS  «Realization»
+' ═══════════════════════════════════
+
+package "Guards  «Realization of CanActivate»" <<Rectangle>> #E3F2FD {
+
+  class JwtAuthGuard <<Guard>> #BBDEFB {
+    - reflector : Reflector
+    - sessions : SessionService
+    + constructor(reflector, sessions)
+    + canActivate(ctx) : Promise<boolean>
+    - extractBearerToken(header?) : string | null
+  }
+
+  class RolesGuard <<Guard>> #BBDEFB {
+    - reflector : Reflector
+    + constructor(reflector)
+    + canActivate(ctx) : boolean
+  }
+
+  JwtAuthGuard ..|> CanActivate : «realizes»
+  RolesGuard ..|> CanActivate : «realizes»
+}
+
+' ═══════════════════════════════════
+'   FILTER & INTERCEPTOR «Realization»
+' ═══════════════════════════════════
+
+package "Cross-Cutting Concerns  «Realization»" <<Rectangle>> #F3E5F5 {
+
+  class HttpExceptionFilter <<Filter>> #E1BEE7 {
+    - logger : Logger
+    + catch(exception, host) : void
+    - toPayload(exception) : {status, message}
+    - toText(...candidates) : string
+  }
+
+  class ResponseEnvelopeInterceptor <<Interceptor>> #E1BEE7 {
+    + intercept(ctx, next) : Observable<Envelope>
+    - envelop(value) : Envelope
+  }
+
+  HttpExceptionFilter ..|> ExceptionFilter : «realizes»
+  ResponseEnvelopeInterceptor ..|> NestInterceptor : «realizes»
+}
+
+' ═══════════════════════════════════
+'  STORAGE «Abstract + Realization»
+' ═══════════════════════════════════
+
+package "Storage Layer  «Abstract · Realization»" <<Rectangle>> #FFFDE7 {
+
+  abstract class ImageStorage <<abstract>> #FFF9C4 {
+    + {abstract} upload(buffer, folder, name) : Promise<string>
+  }
+
+  class CloudinaryImageStorage #FFF9C4 {
+    + constructor(credentials: CloudinaryCredentials)
+    + upload(buffer, folder, name) : Promise<string>
+  }
+
+  class LocalImageStorage #FFF9C4 {
+    - rootDirectory : string
+    + constructor(rootDirectory)
+    + upload(buffer, folder, name) : Promise<string>
+    - sanitize(folder) : string
+  }
+
+  class ResumeStorage #FFF9C4 {
+    - directory : string
+    + constructor(directory)
+    + save(buffer, originalName?) : StoredFile
+    + resolve(storedPath) : string
+    + downloadName(storedPath, fallback) : string
+    + stream(absPath, filename, response) : Promise<void>
+  }
+
+  CloudinaryImageStorage ..|> ImageStorage : «realizes»
+  LocalImageStorage ..|> ImageStorage : «realizes»
+}
+
+' ═══════════════════════════════════
+'        AUTH MODULE
+' ═══════════════════════════════════
+
+package "Auth Module" <<Rectangle>> #EDE7F6 {
+
+  class AuthController <<Controller>> #D1C4E9 {
+    - authService : AuthService
+    + register(dto: RegisterDto) : Promise<ApiResult>
+    + login(dto: LoginDto) : Promise<ApiResult>
+  }
+
+  class AuthService <<Service>> #D1C4E9 {
+    - logger : Logger
+    - users : Repository<User>
+    - dataSource : DataSource
+    - jwtService : JwtService
+    - config : ConfigService
+    + register(dto: RegisterDto) : Promise<ApiResult>
+    + login(dto: LoginDto) : Promise<ApiResult>
+    + signToken(user: User) : Promise<string>
+    - toResponse(user) : Promise<AuthResponse>
+    - assertRoleRequirements(dto) : void
+    - isDuplicateKeyError(error) : boolean
+  }
+
+  class SessionService <<Service>> #D1C4E9 {
+    - users : Repository<User>
+    - jwtService : JwtService
+    + resolve(token: string) : Promise<AuthenticatedUser>
+  }
+
+  AuthController --> AuthService : «association»
+  JwtAuthGuard --> SessionService : «association»\nresolves tokens
+}
+
+' ═══════════════════════════════════
+'        ADMIN MODULE
+' ═══════════════════════════════════
+
+package "Admin Module" <<Rectangle>> #EFEBE9 {
+
+  class AdminController <<Controller>> #D7CCC8 {
+    - admin : AdminService
+    + stats() : Promise<ApiResult>
+    + employers() : Promise<ApiResult>
+    + seekers() : Promise<ApiResult>
+    + users() : Promise<ApiResult>
+    + user(userId) : Promise<ApiResult>
+    + updateStatus(user, userId, dto) : Promise<ApiResult>
+    + deleteUser(user, userId) : Promise<ApiResult>
+    + deleteJob(user, jobId) : Promise<ApiResult>
+    + verify(user, jobId) : Promise<ApiResult>
+    + unverify(user, jobId) : Promise<ApiResult>
+    + jobs(query) : Promise<ApiResult>
+    + logs() : Promise<ApiResult>
+  }
+
+  class AdminService <<Service>> #D7CCC8 {
+    - users : Repository<User>
+    - jobs : Repository<Job>
+    - logs : Repository<AdminLog>
+    - employers : Repository<Employer>
+    - seekers : Repository<JobSeeker>
+    - applications : Repository<Application>
+    - dataSource : DataSource
+    + stats() : Promise<object>
+    + listJobs(query) : Promise<{data, count}>
+    + listUsers() : Promise<object[]>
+    + getUser(userId) : Promise<object>
+    + updateUserStatus(adminId, userId, isActive) : Promise<void>
+    + deleteUser(adminId, userId) : Promise<void>
+    + listEmployers() : Promise<object[]>
+    + listSeekers() : Promise<object[]>
+    + verifyJob(adminId, jobId) : Promise<void>
+    + unverifyJob(adminId, jobId) : Promise<void>
+    + deleteJob(adminId, jobId) : Promise<void>
+    + listLogs() : Promise<object[]>
+    - log(adminId, action, table, targetId) : Promise<void>
+  }
+
+  AdminController --> AdminService : «association»
+}
+
+' ═══════════════════════════════════
+'       EMPLOYER MODULE
+' ═══════════════════════════════════
+
+package "Employer Module" <<Rectangle>> #E0F2F1 {
+
+  class EmployerController <<Controller>> #B2DFDB {
+    - stats : EmployerStatsService
+    - jobs : EmployerJobService
+    - applicants : EmployerApplicantService
+    - profile : EmployerProfileService
+    + statsFor(user) : Promise<ApiResult>
+    + createJob(user, dto) : Promise<ApiResult>
+    + listMyJobs(user) : Promise<ApiResult>
+    + updateJob(user, jobId, dto) : Promise<ApiResult>
+    + updateJobStatus(user, jobId, dto) : Promise<ApiResult>
+    + deleteJob(user, jobId) : Promise<ApiResult>
+    + listApplicants(user, jobId, query) : Promise<ApiResult>
+    + updateApplicationStatus(user, appId, dto) : Promise<ApiResult>
+    + getProfile(user) : Promise<ApiResult>
+    + updateProfile(user, dto) : Promise<ApiResult>
+    + uploadLogo(user, file?) : Promise<ApiResult>
+  }
+
+  class EmployerStatsService <<Service>> #B2DFDB {
+    - jobs : Repository<Job>
+    - applications : Repository<Application>
+    + stats(employerId) : Promise<EmployerStatsDto>
+  }
+
+  class EmployerJobService <<Service>> #B2DFDB {
+    - jobs : Repository<Job>
+    - dataSource : DataSource
+    + create(employerId, dto) : Promise<number>
+    + listMine(employerId) : Promise<{data, count}>
+    + update(employerId, jobId, dto) : Promise<void>
+    + updateStatus(employerId, jobId, status) : Promise<void>
+    + remove(employerId, jobId) : Promise<void>
+    - buildPatch(dto) : Record<string, unknown>
+    - replaceSkills(mgr, jobId, names[]) : Promise<void>
+    - findOrCreateSkill(mgr, name) : Promise<Skill>
+  }
+
+  class EmployerApplicantService <<Service>> #B2DFDB {
+    - applications : Repository<Application>
+    - jobs : Repository<Job>
+    - seekerSkills : Repository<SeekerSkill>
+    + listApplicants(empId, jobId, query) : Promise<{data, count}>
+    + updateApplicationStatus(empId, appId, dto) : Promise<void>
+    - buildQuery(jobId, query) : SelectQueryBuilder
+    - loadSkills(seekerIds[]) : Promise<Map>
+  }
+
+  class EmployerProfileService <<Service>> #B2DFDB {
+    - employers : Repository<Employer>
+    - imageStorage : ImageStorage
+    + getProfile(employerId) : Promise<EmployerProfileDto>
+    + updateProfile(employerId, dto) : Promise<void>
+    + updateLogo(employerId, file?) : Promise<string>
+    - pick(dto) : Partial<Employer>
+    - findOrFail(employerId) : Promise<Employer>
+  }
+
+  EmployerController --> EmployerStatsService : «association»
+  EmployerController --> EmployerJobService : «association»
+  EmployerController --> EmployerApplicantService : «association»
+  EmployerController --> EmployerProfileService : «association»
+  EmployerProfileService --> ImageStorage : «association»
+}
+
+' ═══════════════════════════════════
+'        SEEKER MODULE
+' ═══════════════════════════════════
+
+package "Seeker Module" <<Rectangle>> #E8F5E9 {
+
+  class SeekerController <<Controller>> #C8E6C9 {
+    - stats : SeekerStatsService
+    - applications : SeekerApplicationService
+    - savedJobs : SeekerSavedJobService
+    - profile : SeekerProfileService
+    - resumeStorage : ResumeStorage
+    + findStats(user) : Promise<ApiResult>
+    + apply(user, jobId) : Promise<ApiResult>
+    + listApplications(user) : Promise<ApiResult>
+    + revoke(user, appId) : Promise<ApiResult>
+    + match(user, jobId) : Promise<ApiResult>
+    + saveJob(user, jobId) : Promise<ApiResult>
+    + listSavedJobs(user) : Promise<ApiResult>
+    + removeSavedJob(user, jobId) : Promise<ApiResult>
+    + getProfile(user) : Promise<ApiResult>
+    + updateProfile(user, dto) : Promise<ApiResult>
+    + updateSkills(user, dto) : Promise<ApiResult>
+    + uploadPhoto(user, file?) : Promise<ApiResult>
+    + uploadResume(user, file?) : Promise<ApiResult>
+    + downloadOwnResume(user, res) : Promise<void>
+    + employerOfJob(jobId) : Promise<ApiResult>
+  }
+
+  class SeekerStatsService <<Service>> #C8E6C9 {
+    - applications : Repository<Application>
+    - seekers : Repository<JobSeeker>
+    - savedJobs : Repository<SavedJob>
+    - seekerSkills : Repository<SeekerSkill>
+    + stats(seekerId) : Promise<SeekerStatsDto>
+    - countByStatus(seekerId) : Promise<Record>
+  }
+
+  class SeekerApplicationService <<Service>> #C8E6C9 {
+    - applications : Repository<Application>
+    - seekers : Repository<JobSeeker>
+    - jobs : Repository<Job>
+    - jobSkills : Repository<JobSkill>
+    + apply(seekerId, jobId) : Promise<{app_id, seeker_id}>
+    + list(seekerId) : Promise<{data, count}>
+    + revoke(seekerId, appId) : Promise<void>
+    + jobMatch(seekerId, jobId) : Promise<JobMatchDto>
+    + findEmployerOfJob(jobId) : Promise<Record>
+    - loadJobSkillNames(jobId) : Promise<string[]>
+    - loadSeekerSkillNames(seekerId) : Promise<string[]>
+    - isDuplicateKeyError(error) : boolean
+  }
+
+  class SeekerSavedJobService <<Service>> #C8E6C9 {
+    - savedJobs : Repository<SavedJob>
+    + save(seekerId, jobId) : Promise<void>
+    + remove(seekerId, jobId) : Promise<void>
+    + list(seekerId) : Promise<{data, count}>
+  }
+
+  class SeekerProfileService <<Service>> #C8E6C9 {
+    - seekers : Repository<JobSeeker>
+    - seekerSkills : Repository<SeekerSkill>
+    - resumeStorage : ResumeStorage
+    - imageStorage : ImageStorage
+    + getProfile(seekerId) : Promise<SeekerProfileDto>
+    + updateProfile(seekerId, dto) : Promise<void>
+    + updateResume(seekerId, file?) : Promise<{path, filename}>
+    + getResume(seekerId) : Promise<{absPath, filename}>
+    + updatePhoto(seekerId, file?) : Promise<string>
+    + updateSkills(seekerId, dto) : Promise<void>
+    - normalize(dto) : {name, proficiency}[]
+    - pickUpdatable(dto) : Partial<JobSeeker>
+    - loadSkills(seekerId) : Promise<{name, prof}[]>
+    - findOrFail(seekerId) : Promise<JobSeeker>
+  }
+
+  SeekerController --> SeekerStatsService : «association»
+  SeekerController --> SeekerApplicationService : «association»
+  SeekerController --> SeekerSavedJobService : «association»
+  SeekerController --> SeekerProfileService : «association»
+  SeekerController --> ResumeStorage : «association»
+  SeekerProfileService --> ResumeStorage : «association»
+  SeekerProfileService --> ImageStorage : «association»
+}
+
+' ═══════════════════════════════════
+'       PUBLIC MODULE
+' ═══════════════════════════════════
+
+package "Public Module" <<Rectangle>> #F1F8E9 {
+
+  class PublicController <<Controller>> #DCEDC8 {
+    - publicService : PublicService
+    + findJobs(query) : Promise<ApiResult>
+    + findLandingJobs(query) : Promise<ApiResult>
+    + findJobById(jobId) : Promise<ApiResult>
+    + findSkills(query) : Promise<ApiResult>
+  }
+
+  class PublicService <<Service>> #DCEDC8 {
+    - jobs : Repository<Job>
+    - skills : Repository<Skill>
+    + findJobs(query, limit?) : Promise<{data, count}>
+    + findJobById(jobId) : Promise<PublicJobDto>
+    + findSkills(search?) : Promise<Skill[]>
+    - baseQuery() : SelectQueryBuilder<Job>
+    - applyFilters(qb, query) : void
+  }
+
+  PublicController --> PublicService : «association»
+}
+
+' ═══════════════════════════════════
+'     RESUME DOWNLOAD
+' ═══════════════════════════════════
+
+package "Storage Module" <<Rectangle>> #FFFDE7 {
+
+  class ResumeDownloadController <<Controller>> #FFF9C4 {
+    - applications : Repository<Application>
+    - resumeStorage : ResumeStorage
+    + download(appId, user, response) : Promise<void>
+    - assertMayRead(application, user) : void
+  }
+
+  ResumeDownloadController --> ResumeStorage : «association»
+}
+
+' ═══════════════════════════════════
+'     DEPENDENCY ARROWS  (..>)
+'  Services → Entities they operate on
+' ═══════════════════════════════════
+
+AuthService ..> User : «dependency»\nreads/writes
+AuthService ..> JobSeeker : «dependency»\nwrites
+AuthService ..> Employer : «dependency»\nwrites
+
+SessionService ..> User : «dependency»\nreads
+
+AdminService ..> User : «dependency»\nreads/writes
+AdminService ..> Job : «dependency»\nreads/writes
+AdminService ..> AdminLog : «dependency»\nreads/writes
+AdminService ..> Employer : «dependency»\nreads
+AdminService ..> JobSeeker : «dependency»\nreads
+AdminService ..> Application : «dependency»\nreads
+
+EmployerJobService ..> Job : «dependency»\nCRUD
+EmployerJobService ..> JobSkill : «dependency»\nwrites
+EmployerJobService ..> Skill : «dependency»\nreads/writes
+EmployerStatsService ..> Job : «dependency»\nreads
+EmployerStatsService ..> Application : «dependency»\nreads
+EmployerApplicantService ..> Application : «dependency»\nreads/writes
+EmployerApplicantService ..> Job : «dependency»\nreads
+EmployerApplicantService ..> SeekerSkill : «dependency»\nreads
+EmployerProfileService ..> Employer : «dependency»\nreads/writes
+
+SeekerApplicationService ..> Application : «dependency»\nCRUD
+SeekerApplicationService ..> JobSeeker : «dependency»\nreads
+SeekerApplicationService ..> Job : «dependency»\nreads
+SeekerApplicationService ..> JobSkill : «dependency»\nreads
+SeekerSavedJobService ..> SavedJob : «dependency»\nCRUD
+SeekerStatsService ..> Application : «dependency»\nreads
+SeekerStatsService ..> JobSeeker : «dependency»\nreads
+SeekerStatsService ..> SavedJob : «dependency»\nreads
+SeekerStatsService ..> SeekerSkill : «dependency»\nreads
+SeekerProfileService ..> JobSeeker : «dependency»\nreads/writes
+SeekerProfileService ..> SeekerSkill : «dependency»\nreads/writes
+SeekerProfileService ..> Skill : «dependency»\nreads/writes
+
+PublicService ..> Job : «dependency»\nreads
+PublicService ..> Skill : «dependency»\nreads
+
+' Controllers use ApiResult
+AuthController ..> ApiResult : «dependency»
+AdminController ..> ApiResult : «dependency»
+EmployerController ..> ApiResult : «dependency»
+SeekerController ..> ApiResult : «dependency»
+PublicController ..> ApiResult : «dependency»
+
+legend right
+  |= Symbol |= UML Relationship |
+  | <color:#333>──▶ solid line</color>  | **Association** (directed) |
+  | <color:#333>◆── solid + diamond</color>  | **Composition** (strong, child dies with parent) |
+  | <color:#333>◇── solid + hollow</color>  | **Aggregation** (weak, child lives independently) |
+  | <color:#333>──▷ solid + triangle</color>  | **Generalization** (extends / inherits) |
+  | <color:#333>╌╌▷ dashed + triangle</color>  | **Realization** (implements interface/abstract) |
+  | <color:#333>╌╌▶ dashed arrow</color>  | **Dependency** (uses / depends on) |
+endlegend
+
+@enduml

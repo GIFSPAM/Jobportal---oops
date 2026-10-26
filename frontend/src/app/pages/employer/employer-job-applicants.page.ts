@@ -59,7 +59,7 @@ const COLUMNS = ['Candidate', 'Status', 'Experience', 'Applied At', 'Resume', 'A
         </div>
         <a
           routerLink="/employer/applications"
-          class="text-sm font-bold text-text-muted hover:text-[#1F2A24] transition-colors inline-flex items-center gap-2"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#D8D2C4] bg-[#FAF8F3] text-sm font-bold text-text-muted hover:bg-white hover:border-[#D4622A] hover:text-[#D4622A] active:scale-95 transition-all shadow-sm"
         >
           <app-icon name="arrow-left" [size]="16" /> Back to Jobs
         </a>
@@ -150,14 +150,14 @@ const COLUMNS = ['Candidate', 'Status', 'Experience', 'Applied At', 'Resume', 'A
           <button
             type="button"
             (click)="reload()"
-            class="btn-primary px-5 h-12 rounded-xl text-sm font-bold"
+            class="btn-primary px-6 h-12 rounded-full text-sm font-bold shadow-sm hover:shadow active:scale-95 transition-all"
           >
             Apply
           </button>
           <button
             type="button"
             (click)="resetFilters()"
-            class="px-4 h-12 rounded-xl border border-[#D8D2C4] text-sm font-bold text-[#1F2A24] hover:border-[#D4622A] transition-colors"
+            class="px-5 h-12 rounded-full border border-[#D8D2C4] bg-white text-sm font-bold text-[#1F2A24] hover:border-[#D4622A] hover:text-[#D4622A] active:scale-95 transition-all shadow-sm"
           >
             Reset
           </button>
@@ -197,13 +197,14 @@ const COLUMNS = ['Candidate', 'Status', 'Experience', 'Applied At', 'Resume', 'A
               </thead>
               <tbody class="divide-y divide-[#D8D2C4]">
                 @for (applicant of filtered(); track applicant.application_id) {
-                  <app-employer-applicant-row
+                  <tr
+                    app-employer-applicant-row
                     [applicant]="applicant"
                     [showJobTitle]="false"
                     [showExperience]="true"
                     [downloadingId]="downloadingId()"
                     (download)="download($event)"
-                  />
+                  ></tr>
                 }
               </tbody>
             </table>
