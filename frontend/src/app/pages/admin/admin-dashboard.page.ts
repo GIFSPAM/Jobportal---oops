@@ -283,7 +283,7 @@ export class AdminDashboardPage {
     return this.users().filter((user) => {
       if (role !== 'all' && user.role !== role) return false;
       if (!query) return true;
-      const searchable = [String(user.user_id), user.email, user.full_name, user.company_name];
+      const searchable = [String(user.user_id), user.email, user.full_name, user.company_name, user.crn];
       return searchable
         .filter((part): part is string => Boolean(part))
         .join(' ')
@@ -300,7 +300,10 @@ export class AdminDashboardPage {
     const jobType = this.jobTypeFilter();
     const verification = this.jobVerificationFilter();
     return this.jobs().filter((job) => {
-      const matchesId = !idQuery || String(job.job_id).includes(idQuery);
+      const matchesId =
+        !idQuery ||
+        String(job.job_id).includes(idQuery) ||
+        (job.crn && job.crn.toLowerCase().includes(idQuery.toLowerCase()));
       const matchesTitle =
         !titleQuery || String(job.title ?? '').toLowerCase().includes(titleQuery);
       const matchesLocation = location === ALL || String(job.location ?? '') === location;

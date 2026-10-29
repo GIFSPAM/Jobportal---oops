@@ -16,6 +16,9 @@ export class Employer {
   @Column({ name: 'company_name', type: 'varchar', length: 100, nullable: true })
   companyName!: string | null;
 
+  @Column({ name: 'crn', type: 'varchar', length: 100, nullable: true })
+  crn!: string | null;
+
   @Column({ name: 'company_phone', type: 'varchar', length: 20, nullable: true })
   companyPhone!: string | null;
 

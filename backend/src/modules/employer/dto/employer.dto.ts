@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  Matches,
   Min,
 } from 'class-validator';
 import { ApplicationStatus, CompanySize, JobStatus } from '../../../common/enums/domain.enum';
@@ -93,6 +94,13 @@ export class UpdateApplicationStatusDto {
 export class UpdateEmployerProfileDto {
   @IsOptional() @IsString() @Length(0, 100)
   company_name?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Za-z0-9\-]{5,30}$/, {
+    message: 'crn must be a valid Company Registration Number format (5-30 alphanumeric characters, e.g. CRN-12345678).',
+  })
+  crn?: string;
 
   @IsOptional() @IsString() @Length(0, 20)
   company_phone?: string;

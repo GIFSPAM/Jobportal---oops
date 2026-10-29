@@ -1,6 +1,7 @@
 export interface EmployerProfile {
   employer_id?: number;
   company_name: string | null;
+  crn?: string | null;
   industry?: string | null;
   company_size?: string | null;
   company_location?: string | null;
@@ -38,6 +39,7 @@ export interface EmployerJob {
   salary_max: number | null;
   applicant_count: number;
   skills: string[];
+  crn?: string | null;
 }
 
 export interface EmployerApplicant {

@@ -10,6 +10,7 @@ import type { UpdateEmployerProfileDto } from './dto/employer.dto';
 export interface EmployerProfileDto {
   employer_id: number;
   company_name: string | null;
+  crn: string | null;
   company_phone: string | null;
   industry: string | null;
   company_size: string | null;
@@ -64,6 +65,7 @@ export class EmployerProfileService {
   private pick(dto: UpdateEmployerProfileDto): Partial<Employer> {
     const patch: Partial<Employer> = {};
     if (dto.company_name !== undefined) patch.companyName = dto.company_name ?? null;
+    if (dto.crn !== undefined) patch.crn = dto.crn ? dto.crn.trim().toUpperCase() : null;
     if (dto.company_phone !== undefined) patch.companyPhone = dto.company_phone ?? null;
     if (dto.industry !== undefined) patch.industry = dto.industry ?? null;
     if (dto.company_size !== undefined) patch.companySize = dto.company_size ?? null;
@@ -82,6 +84,7 @@ export class EmployerProfileService {
 const toProfile = (employer: Employer): EmployerProfileDto => ({
   employer_id: employer.employerId,
   company_name: employer.companyName,
+  crn: employer.crn,
   company_phone: employer.companyPhone,
   industry: employer.industry,
   company_size: employer.companySize,

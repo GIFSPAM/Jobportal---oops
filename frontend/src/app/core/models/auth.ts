@@ -42,6 +42,7 @@ export interface RegisterRequest {
   education?: string;
   experience_years?: number;
   company_name?: string;
+  crn?: string;
   industry?: string;
   company_size?: string;
   company_location?: string;

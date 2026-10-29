@@ -20,6 +20,7 @@ export interface AdminUser {
   avatar_url?: string;
   profile_picture_url?: string;
   company_name?: string;
+  crn?: string | null;
   company_website?: string;
   phone_number?: string;
   education?: string;
@@ -45,6 +46,7 @@ export interface AdminJob {
   is_verified?: boolean;
   posted_at?: string;
   company_name?: string;
+  crn?: string | null;
   company_website?: string;
   profile_picture_url?: string;
   logo?: string;
@@ -68,6 +70,7 @@ export interface AdminEmployer {
   is_active: boolean | number;
   created_at?: string;
   company_name?: string | null;
+  crn?: string | null;
   industry?: string | null;
   company_size?: string | null;
   company_location?: string | null;

@@ -22,6 +22,13 @@ export class EmployerJobService {
   ) {}
 
   async create(employerId: number, dto: CreateJobDto): Promise<number> {
+    const employer = await this.dataSource.getRepository(Employer).findOne({ where: { employerId } });
+    if (!employer?.crn || !employer.crn.trim()) {
+      throw new BadRequestError(
+        'Company Registration Number (CRN) is mandatory before posting jobs. Please update your CRN in your company profile.',
+      );
+    }
+
     const skills = normalizeSkillInput(dto.skills);
 
     const job = await this.dataSource.transaction(async (manager) => {
@@ -61,6 +68,7 @@ export class EmployerJobService {
       .addSelect('j.posted_at', 'posted_at')
       .addSelect('j.salary_min', 'salary_min')
       .addSelect('j.salary_max', 'salary_max')
+      .addSelect('e.crn', 'crn')
       .addSelect(
         `(SELECT COUNT(*) FROM Applications a WHERE a.job_id = j.job_id)`,
         'applicant_count',

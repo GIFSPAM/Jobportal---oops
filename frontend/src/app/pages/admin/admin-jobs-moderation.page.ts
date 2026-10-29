@@ -81,7 +81,10 @@ export class AdminJobsModerationPage {
     const verification = this.jobVerificationFilter();
 
     return this.jobs().filter((job) => {
-      const matchesId = !idQuery || String(job.job_id).includes(idQuery);
+      const matchesId =
+        !idQuery ||
+        String(job.job_id).includes(idQuery) ||
+        (job.crn && job.crn.toLowerCase().includes(idQuery.toLowerCase()));
       const matchesTitle =
         !titleQuery || String(job.title ?? '').toLowerCase().includes(titleQuery);
       const matchesLocation = location === 'all' || String(job.location ?? '') === location;

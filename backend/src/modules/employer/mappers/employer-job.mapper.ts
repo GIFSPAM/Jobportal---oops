@@ -18,6 +18,7 @@ export interface EmployerJobDto {
   salary_max: number | null;
   applicant_count: number;
   skills: string[];
+  crn?: string | null;
 }
 
 export const toEmployerJobDto = (row: Record<string, unknown>): EmployerJobDto => ({
@@ -36,6 +37,7 @@ export const toEmployerJobDto = (row: Record<string, unknown>): EmployerJobDto =
   salary_max: row.salary_max === null || row.salary_max === undefined ? null : Number(row.salary_max),
   applicant_count: Number(row.applicant_count ?? 0),
   skills: csvToSkills(row.skills_list as string | null),
+  crn: (row.crn as string | null) ?? null,
 });
 
 /** One applicant row as presented to the hiring employer. */

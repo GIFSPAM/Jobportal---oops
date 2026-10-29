@@ -35,6 +35,7 @@ export function mapJob(row: JobRow): Job {
     id: Number(row.job_id),
     title: row.title ?? '',
     company: row.company_name ?? '',
+    crn: toStringOrUndefined(row.crn),
     location: row.location ?? '',
     salary: formatSalary(salaryMin, salaryMax),
     type: row.job_type ?? '',

@@ -93,6 +93,11 @@ function draftFrom(job: EmployerJob): JobDraftForm {
                 variant="verification"
                 [value]="current.is_verified ? 'true' : 'false'"
               />
+              @if (current.crn) {
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-700 text-xs font-bold">
+                  CRN: {{ current.crn }}
+                </span>
+              }
             }
           </div>
         </div>
@@ -113,10 +118,11 @@ function draftFrom(job: EmployerJob): JobDraftForm {
       } @else if (error()) {
         <div class="glass-card p-8 text-center text-red-500">{{ error() }}</div>
       } @else if (job(); as current) {
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <app-detail-field-card label="Location" [value]="current.location || '—'" />
           <app-detail-field-card label="Salary" [value]="salary(current)" />
           <app-detail-field-card label="Applicants" [value]="current.applicant_count" />
+          <app-detail-field-card label="CRN No" [value]="current.crn || 'Not assigned'" />
           <app-detail-field-card label="Posted" [value]="current.posted_at | appDate" />
         </div>
 

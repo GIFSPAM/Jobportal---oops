@@ -114,6 +114,7 @@ export function toCardJob(job: AdminJob): Job {
     id: Number(job.job_id),
     title: job.title,
     company: job.company_name ?? 'Unknown company',
+    crn: job.crn,
     location: job.location ?? 'No location',
     salary: formatSalaryRange(job.salary_min, job.salary_max),
     type: job.job_type || 'Unknown',

@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { JobStatus, normalizeSkillName } from '../../common/enums/domain.enum';
@@ -88,6 +88,7 @@ export class PublicService {
       .addSelect('j.status', 'status')
       .addSelect('j.is_verified', 'is_verified')
       .addSelect('e.company_name', 'company_name')
+      .addSelect('e.crn', 'crn')
       .addSelect('e.profile_picture_url', 'profile_picture_url')
       .addSelect(skillsCsvSubquery('j'), 'skills_list');
   }

@@ -99,6 +99,9 @@ const COLUMNS = ['Job', 'Applicants', 'Status', 'Verification', 'Posted', 'Actio
                     </a>
                     <p class="text-xs text-text-muted mt-1">
                       {{ job.location }} · {{ job.job_type | jobType }}
+                      @if (job.crn) {
+                        · <span class="font-semibold text-[#1F2A24]">CRN: {{ job.crn }}</span>
+                      }
                     </p>
                   </td>
                   <td class="px-5 py-4">

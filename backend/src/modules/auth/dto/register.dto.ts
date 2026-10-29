@@ -1,4 +1,4 @@
-import { IsEnum, IsEmail, IsInt, IsOptional, IsString, Length, Min, MinLength } from 'class-validator';
+import { IsEnum, IsEmail, IsInt, IsOptional, IsString, Length, Matches, Min, MinLength } from 'class-validator';
 import { CompanySize, UserRole } from '../../../common/enums/domain.enum';
 
 /** Registration payload. */
@@ -33,6 +33,13 @@ export class RegisterDto {
   // --- employer profile ---------------------------------------------------
   @IsOptional() @IsString() @Length(0, 100)
   company_name?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Za-z0-9\-]{5,30}$/, {
+    message: 'crn must be a valid Company Registration Number format (5-30 alphanumeric characters, e.g. CRN-12345678).',
+  })
+  crn?: string;
 
   @IsOptional() @IsString() @Length(0, 100)
   industry?: string;

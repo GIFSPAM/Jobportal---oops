@@ -169,6 +169,8 @@ export class SeekerApplicationService {
       .addSelect('employer.company_size', 'company_size')
       .addSelect('employer.company_location', 'company_location')
       .addSelect('employer.company_website', 'company_website')
+      .addSelect('employer.crn', 'crn')
+      .addSelect('employer.profile_picture_url', 'logo_url')
       .where('job.job_id = :jobId', { jobId })
       .getRawOne<Record<string, unknown>>();
 

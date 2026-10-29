@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS JobSeekers (
 CREATE TABLE IF NOT EXISTS Employers (
     employer_id INT PRIMARY KEY,
     company_name VARCHAR(100),
+    crn VARCHAR(100),
     company_phone VARCHAR(20),
     industry VARCHAR(100),
     company_size ENUM('1-10', '11-50', '51-200', '201-500', '500+'),

@@ -11,6 +11,7 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { EmployerService } from '../../core/employer/employer.service';
 import { EmployerJob, EmployerProfile, EmployerStats } from '../../core/models/employer';
 import { ToastService } from '../../core/toast/toast.service';
+import { RouterLink } from '@angular/router';
 import {
   DetailFieldCardComponent,
   IconName,
@@ -43,6 +44,7 @@ const SKELETON_ROWS = [1, 2, 3, 4];
   selector: 'app-employer-dashboard-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    RouterLink,
     PageContainerComponent,
     StatCardComponent,
     DetailFieldCardComponent,
@@ -70,6 +72,25 @@ const SKELETON_ROWS = [1, 2, 3, 4];
           }
         </div>
       </header>
+
+      @if (!loading() && profile() && !profile()?.crn) {
+        <div class="rounded-2xl border border-amber-300 bg-amber-50/90 p-4 flex items-center justify-between flex-wrap gap-3 shadow-sm">
+          <div class="flex items-center gap-3">
+            <app-icon name="shield-check" [size]="24" class="text-amber-700 shrink-0" />
+            <div>
+              <p class="text-sm font-bold text-amber-900">
+                Action Required: Company Registration Number (CRN) Missing
+              </p>
+              <p class="text-xs text-amber-800">
+                A standardized CRN is mandatory to verify company existence and post active jobs.
+              </p>
+            </div>
+          </div>
+          <a routerLink="/employer/profile" class="btn-primary text-xs px-4 py-2 rounded-full font-bold">
+            Complete CRN Profile
+          </a>
+        </div>
+      }
 
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         @for (tile of tiles(); track tile.label; let i = $index) {
@@ -105,6 +126,10 @@ const SKELETON_ROWS = [1, 2, 3, 4];
                 <app-detail-field-card
                   label="Company Name"
                   [value]="profile()?.company_name || 'Not added'"
+                />
+                <app-detail-field-card
+                  label="CRN No"
+                  [value]="profile()?.crn || 'Not added (Required)'"
                 />
                 <app-detail-field-card
                   label="Industry"

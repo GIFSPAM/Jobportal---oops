@@ -87,6 +87,7 @@ export interface SeekerOverview {
 export interface CompanyDetails {
   employer_id: number;
   company_name: string | null;
+  crn?: string | null;
   /** Company avatar, when the employer has uploaded one. */
   logo_url?: string | null;
   company_phone: string | null;

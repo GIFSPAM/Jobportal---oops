@@ -73,6 +73,12 @@ interface EmployerRow {
                       #{{ row.employer.user_id }} · {{ row.employer.company_name ?? 'Unnamed Company' }}
                     </span>
                     <span
+                      class="text-xs px-2.5 py-0.5 rounded-full border font-bold"
+                      [ngClass]="row.employer.crn ? 'bg-sky-500/10 text-sky-800 border-sky-500/20' : 'bg-red-500/10 text-red-700 border-red-500/20'"
+                    >
+                      {{ row.employer.crn ? 'CRN: ' + row.employer.crn : 'CRN: Missing' }}
+                    </span>
+                    <span
                       class="text-xs px-2 py-1 rounded-full border font-bold"
                       [ngClass]="row.statusClass"
                     >
@@ -122,6 +128,7 @@ export class AdminEmployersPage {
         String(employer.user_id),
         employer.email,
         employer.company_name ?? '',
+        employer.crn ?? '',
         employer.company_website ?? '',
         employer.company_location ?? '',
       ];

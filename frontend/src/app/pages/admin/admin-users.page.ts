@@ -63,7 +63,7 @@ export class AdminUsersPage {
     return this.users().filter((user) => {
       if (role !== 'all' && user.role !== role) return false;
       if (!query) return true;
-      const searchable = [String(user.user_id), user.email, user.full_name, user.company_name];
+      const searchable = [String(user.user_id), user.email, user.full_name, user.company_name, user.crn];
       return searchable
         .filter((part): part is string => Boolean(part))
         .join(' ')

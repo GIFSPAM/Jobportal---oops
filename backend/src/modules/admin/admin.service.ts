@@ -80,6 +80,7 @@ export class AdminService {
       .addSelect('j.salary_min', 'salary_min')
       .addSelect('j.salary_max', 'salary_max')
       .addSelect('e.company_name', 'company_name')
+      .addSelect('e.crn', 'crn')
       .addSelect('e.profile_picture_url', 'profile_picture_url')
       .addSelect(skillsCsvSubquery('j'), 'skills_list');
 
@@ -131,6 +132,7 @@ export class AdminService {
       salary_min: row.salary_min === null ? null : Number(row.salary_min),
       salary_max: row.salary_max === null ? null : Number(row.salary_max),
       company_name: row.company_name,
+      crn: (row.crn as string | null) ?? null,
       profile_picture_url: row.profile_picture_url,
       skills: csvToSkills(row.skills_list as string | null),
     }));
@@ -150,6 +152,7 @@ export class AdminService {
       .addSelect('u.created_at', 'created_at')
       .addSelect('js.full_name', 'full_name')
       .addSelect('e.company_name', 'company_name')
+      .addSelect('e.crn', 'crn')
       .addSelect('e.company_website', 'company_website')
       .orderBy('u.created_at', 'DESC')
       .getRawMany<Record<string, unknown>>();
@@ -177,6 +180,7 @@ export class AdminService {
       .addSelect('js.experience_years', 'experience_years')
       .addSelect('js.profile_picture_url', 'seeker_profile_picture_url')
       .addSelect('e.company_name', 'company_name')
+      .addSelect('e.crn', 'crn')
       .addSelect('e.company_phone', 'company_phone')
       .addSelect('e.industry', 'industry')
       .addSelect('e.company_size', 'company_size')
@@ -215,7 +219,7 @@ export class AdminService {
 
   async listEmployers() {
     const rows = await this.dataSource.query(
-      `SELECT u.user_id, u.email, u.is_active, u.created_at, e.company_name, e.industry,
+      `SELECT u.user_id, u.email, u.is_active, u.created_at, e.company_name, e.crn, e.industry,
               e.company_size, e.company_location, e.company_website, e.company_phone,
               COUNT(j.job_id) AS total_jobs
        FROM Users u

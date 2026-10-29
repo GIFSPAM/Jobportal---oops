@@ -70,6 +70,12 @@ const SKELETON_ROWS = [1, 2, 3, 4, 5];
             <div metaBadge class="flex items-center gap-2 flex-wrap justify-end">
               <span
                 class="text-[10px] px-2.5 py-1 rounded-full border font-bold uppercase tracking-wider"
+                [ngClass]="job.crn ? 'bg-sky-500/10 text-sky-800 border-sky-500/20' : 'bg-red-500/10 text-red-700 border-red-500/20'"
+              >
+                {{ job.crn ? 'CRN: ' + job.crn : 'CRN: Missing' }}
+              </span>
+              <span
+                class="text-[10px] px-2.5 py-1 rounded-full border font-bold uppercase tracking-wider"
                 [ngClass]="verifiedBadgeClass(job)"
               >
                 {{ job.is_verified ? 'Verified' : 'Unverified' }}
@@ -122,6 +128,7 @@ const SKELETON_ROWS = [1, 2, 3, 4, 5];
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <app-detail-field-card label="Job ID" [value]="job.job_id" />
             <app-detail-field-card label="Company" [value]="job.company_name ?? 'Unknown'" />
+            <app-detail-field-card label="CRN No (Company Registration No)" [value]="job.crn ?? 'Not provided (Unverified)'" />
             <app-detail-field-card label="Location" [value]="job.location ?? 'Not added'" />
             <app-detail-field-card label="Job Type" [value]="job.job_type ?? 'Not specified'" />
             <app-detail-field-card label="Posted" [value]="formatDateTime(job.posted_at)" />
@@ -164,12 +171,18 @@ const SKELETON_ROWS = [1, 2, 3, 4, 5];
             <h3 class="text-sm uppercase tracking-widest text-text-muted font-bold mb-3">
               Moderation Snapshot
             </h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div
                 class="rounded-xl border border-[#EFE9DD] bg-[#FAF8F3] p-3 text-sm text-text-muted inline-flex items-center gap-2"
               >
                 <app-icon class="text-brand-accent" name="shield-check" [size]="16" />
-                Admin moderation enabled
+                Admin moderation
+              </div>
+              <div
+                class="rounded-xl border border-[#EFE9DD] bg-[#FAF8F3] p-3 text-sm text-text-muted inline-flex items-center gap-2"
+              >
+                <app-icon [class]="job.crn ? 'text-sky-700' : 'text-red-500'" name="shield-check" [size]="16" />
+                CRN: {{ job.crn || 'Missing CRN' }}
               </div>
               <div
                 class="rounded-xl border border-[#EFE9DD] bg-[#FAF8F3] p-3 text-sm text-text-muted inline-flex items-center gap-2"

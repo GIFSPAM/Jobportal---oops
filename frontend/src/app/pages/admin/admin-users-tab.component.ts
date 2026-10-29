@@ -126,6 +126,14 @@ interface UserRow {
                     >
                       {{ row.roleLabel }}
                     </span>
+                    @if (row.user.role === 'employer') {
+                      <span
+                        class="text-xs px-2.5 py-0.5 rounded-full border font-bold"
+                        [ngClass]="row.user.crn ? 'bg-sky-500/10 text-sky-800 border-sky-500/20' : 'bg-red-500/10 text-red-700 border-red-500/20'"
+                      >
+                        {{ row.user.crn ? 'CRN: ' + row.user.crn : 'CRN: Missing' }}
+                      </span>
+                    }
                     <span
                       class="text-xs px-2 py-1 rounded-full border font-bold"
                       [ngClass]="row.statusClass"

@@ -73,6 +73,7 @@ export class AuthService {
           await manager.insert(Employer, {
             employerId: user.userId,
             companyName: dto.company_name ?? null,
+            crn: dto.crn ? dto.crn.trim().toUpperCase() : null,
             companyPhone: dto.company_phone ?? null,
             industry: dto.industry ?? null,
             companySize: dto.company_size ?? null,

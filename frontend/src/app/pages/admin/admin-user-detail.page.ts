@@ -324,6 +324,7 @@ export class AdminUserDetailPage {
       return [
         ...base,
         { label: 'Company Name', value: user.company_name ?? 'Not added' },
+        { label: 'CRN No (Registration No)', value: user.crn ?? 'Not added' },
         { label: 'Industry', value: user.industry ?? 'Not added' },
         { label: 'Company Size', value: user.company_size ?? 'Not added' },
         { label: 'Location', value: user.company_location ?? 'Not added' },

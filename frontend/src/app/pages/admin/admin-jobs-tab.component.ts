@@ -78,7 +78,7 @@ interface JobRow {
                 id="admin-job-id"
                 type="search"
                 class="input-field input-field-with-icon h-12 w-full min-w-0"
-                placeholder="Search by Job ID"
+                placeholder="Search by Job ID or CRN"
                 [value]="jobIdSearchQuery()"
                 (input)="jobIdSearchChange.emit(jobIdEl.value)"
               />
@@ -188,6 +188,13 @@ interface JobRow {
             <div class="cursor-pointer" (click)="onCardClick($event, row.job)">
               <app-job-card [job]="row.card" [clickable]="false">
                 <div metaBadge class="flex items-center gap-2 flex-wrap justify-end">
+                  <span
+                    class="text-[10px] px-2.5 py-1 rounded-full border font-bold uppercase tracking-wider"
+                    [ngClass]="row.job.crn ? 'bg-sky-500/10 text-sky-800 border-sky-500/20' : 'bg-red-500/10 text-red-700 border-red-500/20'"
+                    title="Company Registration Number for company verification"
+                  >
+                    {{ row.job.crn ? 'CRN: ' + row.job.crn : 'CRN: Missing' }}
+                  </span>
                   <span
                     class="text-[10px] px-2.5 py-1 rounded-full border font-bold uppercase tracking-wider"
                     [ngClass]="row.verifiedClass"

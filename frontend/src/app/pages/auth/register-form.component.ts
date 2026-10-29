@@ -186,6 +186,13 @@ const COMPANY_SIZES = ['1-10', '11-50', '51-200', '201-500', '500+'];
                     [value]="companyPhone()"
                     (valueChange)="companyPhone.set($event)"
                   />
+                  <app-auth-field
+                    label="CRN No (Optional now, mandatory after registration)"
+                    icon="shield-check"
+                    placeholder="e.g. CRN-12345678"
+                    [value]="crn()"
+                    (valueChange)="crn.set($event.toUpperCase())"
+                  />
                 </div>
               </app-auth-form-section>
             }
@@ -303,6 +310,7 @@ export class RegisterFormComponent {
   readonly companyLocation = signal('');
   readonly companyWebsite = signal('');
   readonly companyPhone = signal('');
+  readonly crn = signal('');
 
   // --- admin fields ---
   readonly secretKey = signal('');
@@ -391,6 +399,7 @@ export class RegisterFormComponent {
         company_location: this.companyLocation() || undefined,
         company_website: this.companyWebsite() || undefined,
         company_phone: this.companyPhone() || undefined,
+        crn: this.crn().trim() ? this.crn().trim().toUpperCase() : undefined,
       };
     }
 

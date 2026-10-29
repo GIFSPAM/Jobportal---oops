@@ -89,7 +89,16 @@ function normalizeWebsiteUrl(website?: string | null): string | null {
             }
           </div>
         } @else if (employerDetails(); as details) {
-          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4">
+            <div class="rounded-2xl border border-[#D8D2C4] bg-[#FAF8F3] p-5">
+              <p class="text-xs uppercase tracking-widest text-text-muted font-bold mb-2">
+                CRN No
+              </p>
+              <p class="text-[#1F2A24] font-medium inline-flex items-center gap-2">
+                <app-icon name="shield-check" [size]="16" class="text-brand-accent" />
+                {{ details.crn || 'Unregistered' }}
+              </p>
+            </div>
             <div class="rounded-2xl border border-[#D8D2C4] bg-[#FAF8F3] p-5">
               <p class="text-xs uppercase tracking-widest text-text-muted font-bold mb-2">
                 Industry

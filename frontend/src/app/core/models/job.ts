@@ -22,6 +22,7 @@ export interface JobRow {
   is_verified: 0 | 1 | boolean;
   posted_at: string;
   company_name: string;
+  crn?: string | null;
   employer_id: number;
   profile_picture_url?: string | null;
   skills: string[];
@@ -37,6 +38,7 @@ export interface Job {
   id: number;
   title: string;
   company: string;
+  crn?: string | null;
   location: string;
   salary: string;
   type: string;

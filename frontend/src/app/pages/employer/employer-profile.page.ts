@@ -29,6 +29,7 @@ const COMPANY_SIZES = ['1-10', '11-50', '51-200', '201-500', '500+'] as const;
 /** Editable keys — mirrors the backend DTO exactly. */
 type EditableKey =
   | 'company_name'
+  | 'crn'
   | 'company_phone'
   | 'industry'
   | 'company_size'
@@ -36,8 +37,15 @@ type EditableKey =
   | 'company_website';
 
 /** Text inputs rendered in the profile form. */
-const FIELDS: { key: EditableKey; label: string; placeholder: string; type: string }[] = [
+const FIELDS: { key: EditableKey; label: string; placeholder: string; type: string; helper?: string }[] = [
   { key: 'company_name', label: 'Company Name', placeholder: 'Tech Corp', type: 'text' },
+  {
+    key: 'crn',
+    label: 'CRN No (Company Registration No) *',
+    placeholder: 'e.g. CRN-12345678',
+    type: 'text',
+    helper: 'Mandatory standard number used by admin for company existence verification.',
+  },
   { key: 'industry', label: 'Industry', placeholder: 'Cloud Computing', type: 'text' },
   { key: 'company_phone', label: 'Company Phone', placeholder: '+1-555-0100', type: 'tel' },
   { key: 'company_location', label: 'Location', placeholder: 'San Francisco, CA', type: 'text' },
@@ -147,6 +155,9 @@ function jobTypeLabel(value: string | null | undefined): string {
                     [value]="value(field.key)"
                     (input)="onFieldChange(field.key, $event)"
                   />
+                  @if (field.helper) {
+                    <p class="text-[11px] text-brand-accent mt-0.5">{{ field.helper }}</p>
+                  }
                 </div>
               }
 
@@ -281,6 +292,7 @@ export class EmployerProfilePage {
 
   private readonly form = signal<Record<EditableKey, string>>({
     company_name: '',
+    crn: '',
     company_phone: '',
     industry: '',
     company_size: '1-10',
@@ -354,6 +366,7 @@ export class EmployerProfilePage {
           this.stats.set(stats);
           this.form.set({
             company_name: profile.company_name ?? '',
+            crn: profile.crn ?? '',
             company_phone: profile.company_phone ?? '',
             industry: profile.industry ?? '',
             company_size:
@@ -378,7 +391,8 @@ export class EmployerProfilePage {
   }
 
   onFieldChange(key: EditableKey, event: Event): void {
-    const value = (event.target as HTMLInputElement | HTMLSelectElement).value;
+    const raw = (event.target as HTMLInputElement | HTMLSelectElement).value;
+    const value = key === 'crn' ? raw.toUpperCase() : raw;
     this.form.update((form) => ({ ...form, [key]: value }));
   }
 
@@ -388,8 +402,20 @@ export class EmployerProfilePage {
     if (this.saving()) return;
 
     const form = this.form();
+    const crn = form.crn.trim().toUpperCase();
+    if (!crn) {
+      this.toast.error('Company Registration Number (CRN) is mandatory.');
+      return;
+    }
+    const crnPattern = /^[A-Z0-9\-]{5,30}$/;
+    if (!crnPattern.test(crn)) {
+      this.toast.error('CRN must be a valid standard format (5-30 alphanumeric characters, e.g. CRN-12345678).');
+      return;
+    }
+
     const payload: Partial<EmployerProfile> = {
       company_name: form.company_name.trim(),
+      crn,
       company_phone: form.company_phone.trim(),
       industry: form.industry.trim(),
       company_size: form.company_size,

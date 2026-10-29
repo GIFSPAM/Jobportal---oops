@@ -11,6 +11,7 @@ export interface PublicJobDto {
   salary_max: number | null;
   posted_at: Date | string;
   company_name: string | null;
+  crn?: string | null;
   status: string;
   is_verified: boolean;
   profile_picture_url: string | null;
@@ -29,6 +30,7 @@ export interface JobRawRow {
   salary_max: number | string | null;
   posted_at: Date | string;
   company_name: string | null;
+  crn?: string | null;
   status: string;
   is_verified: number | boolean;
   profile_picture_url: string | null;
@@ -46,6 +48,7 @@ export function toPublicJobDto(row: JobRawRow, includeDescription = false): Publ
     salary_max: toNumber(row.salary_max),
     posted_at: row.posted_at,
     company_name: row.company_name,
+    crn: (row.crn as string | null) ?? null,
     status: row.status,
     is_verified: Boolean(Number(row.is_verified)),
     profile_picture_url: row.profile_picture_url,
